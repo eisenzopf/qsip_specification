@@ -31,6 +31,7 @@ The key words "**MUST**", "**MUST NOT**", "**REQUIRED**", "**SHALL**", "**SHALL 
   - [1.1. Purpose](#11-purpose)
   - [1.2. Design Goals](#12-design-goals)
   - [1.3. Weaknesses of Existing Protocols](#13-weaknesses-of-existing-protocols)
+  - [1.4. Supported Scenarios](#14-supported-scenarios)
 - [2. Architectural Overview](#2-architectural-overview)
 - [3. Transport Layer](#3-transport-layer)
   - [3.1. QUIC](#31-quic)
@@ -66,6 +67,28 @@ The key words "**MUST**", "**MUST NOT**", "**REQUIRED**", "**SHALL**", "**SHALL 
   - [5.23. KEY_EXCHANGE](#523-key_exchange)
   - [5.24. MEDIA_UPDATE](#524-media_update)
   - [5.25. USER_PROFILE](#525-user_profile)
+  - [5.26. SYNC](#526-sync)
+  - [5.27. PUSH](#527-push)
+  - [5.28. SEARCH](#528-search)
+  - [5.29. ROSTER](#529-roster)
+  - [5.30. CHANNEL](#530-channel)
+  - [5.31. BOT](#531-bot)
+  - [5.32. VOICEMAIL](#532-voicemail)
+  - [5.33. FEDERATION](#533-federation)
+  - [5.34. WORKSPACE](#534-workspace)
+  - [5.35. STORY](#535-story)
+  - [5.36. FORM](#536-form)
+  - [5.37. PAYMENT](#537-payment)
+  - [5.38. TRANSCRIPT](#538-transcript)
+  - [5.39. BACKUP](#539-backup)
+  - [5.40. MFA](#540-mfa)
+  - [5.41. SUBSCRIPTION](#541-subscription)
+  - [5.42. INTERACTIVE](#542-interactive)
+  - [5.43. COMMAND](#543-command)
+  - [5.44. WEBHOOK](#544-webhook)
+  - [5.45. WORKFLOW](#545-workflow)
+  - [5.46. MODAL](#546-modal)
+  - [5.47. CLIP](#547-clip)
 - [6. Session Management](#6-session-management)
   - [6.1. Session Lifecycle](#61-session-lifecycle)
   - [6.2. State Machines](#62-state-machines)
@@ -100,10 +123,22 @@ The key words "**MUST**", "**MUST NOT**", "**REQUIRED**", "**SHALL**", "**SHALL 
   - [15.1. QSIP-to-SIP Gateway](#151-qsip-to-sip-gateway)
   - [15.2. QSIP-to-XMPP Gateway](#152-qsip-to-xmpp-gateway)
   - [15.3. RTP Fallback Considerations](#153-rtp-fallback-considerations)
-- [16. JSON Schemas](#16-json-schemas)
-- [17. References](#17-references)
-  - [17.1. Normative References](#171-normative-references)
-  - [17.2. Informative References](#172-informative-references)
+- [16. Multi-Device Synchronization](#16-multi-device-synchronization)
+  - [16.1. Device Management](#161-device-management)
+  - [16.2. Message Synchronization](#162-message-synchronization)
+  - [16.3. State Synchronization](#163-state-synchronization)
+- [17. Federation](#17-federation)
+  - [17.1. Server Discovery](#171-server-discovery)
+  - [17.2. Cross-Server Authentication](#172-cross-server-authentication)
+  - [17.3. Message Routing](#173-message-routing)
+- [18. App Development](#18-app-development)
+  - [18.1. App Registration](#181-app-registration)
+  - [18.2. Permissions and Scopes](#182-permissions-and-scopes)
+  - [18.3. App Distribution](#183-app-distribution)
+- [19. JSON Schemas](#19-json-schemas)
+- [20. References](#20-references)
+  - [20.1. Normative References](#201-normative-references)
+  - [20.2. Informative References](#202-informative-references)
 - [Appendix A: Example Flows](#appendix-a-example-flows)
 - [Appendix B: Detailed State Machines](#appendix-b-detailed-state-machines)
 - [Appendix C: Comparative Analysis](#appendix-c-comparative-analysis)
@@ -144,6 +179,88 @@ QSIP aims to address several limitations observed in traditional RTC and messagi
 | **No Unified Messaging/Media** | Yes (SIP for signaling, RTP for media)  | Primarily messaging, media via Jingle. | Media-focused, signaling external.       | **Unified protocol** for signaling, messaging, and media transport control.    |
 | **Heavy SDP Parsing**      | **Yes**, complex and verbose.             | Jingle uses XML-based descriptions.      | **Yes**, SDP is core.                    | **Simplified media negotiation** (e.g., `MEDIA_UPDATE`), lean JSON payloads.    |
 | **Complexity**             | High protocol and state machine complexity. | High extension and stanza complexity.    | Signaling complexity devolved to application. | **Simplified JSON envelope**, clear message types, QUIC handles transport complexity. |
+
+### 1.4. Supported Scenarios
+
+QSIP is designed to support a comprehensive range of modern communication and collaboration scenarios. The following examples demonstrate the protocol's versatility:
+
+#### 1.4.1. Real-Time Communication
+
+* **Peer-to-Peer Audio/Video Calls**: Direct calls between two users with end-to-end encryption via SFrame
+* **Group Video Conferences**: Multi-party video meetings with SFU/MCU support, screen sharing, and recording
+* **Live Streaming**: One-to-many broadcasting with real-time chat and reactions
+* **Instant Audio Rooms**: Quick voice conversations (like Slack Huddles) without formal meeting setup
+
+#### 1.4.2. Messaging and Collaboration
+
+* **Rich Text Messaging**: Text with markdown formatting, mentions, and threading
+* **File Sharing**: Documents, images, and media files with progress tracking
+* **Ephemeral Messages**: Self-destructing messages with configurable TTL
+* **Message Reactions**: Emoji reactions and quick responses
+* **Threaded Discussions**: Organized conversations with topic threading
+* **Voice/Video Messages**: Asynchronous clips with automatic transcription
+
+#### 1.4.3. Interactive Content
+
+* **Rich Cards**: Structured content with images, buttons, and actions
+* **Interactive Forms**: Modal dialogs for data collection and workflows
+* **Polls and Surveys**: Real-time voting with result aggregation
+* **Collaborative Canvas**: Shared whiteboards and drawing surfaces
+* **Embedded Apps**: Mini-applications and widgets within messages
+
+#### 1.4.4. Automation and Integration
+
+* **Slash Commands**: Quick actions like `/remind`, `/poll`, `/call`
+* **Webhooks**: Bidirectional integration with external services
+* **Automated Workflows**: Multi-step processes with conditional logic
+* **Scheduled Messages**: Time-delayed content delivery
+* **Bot Interactions**: AI assistants and automated agents
+* **Event Subscriptions**: Follow threads, channels, or automated tool outputs
+
+#### 1.4.5. Team Collaboration
+
+* **Workspaces**: Organized team environments with channels and groups
+* **Channel Management**: Public/private channels with granular permissions
+* **Presence and Status**: Real-time availability with custom messages
+* **Calendar Integration**: Meeting scheduling and event management
+* **Task Management**: To-do lists and project tracking
+
+#### 1.4.6. Call Center Operations
+
+* **Queue Management**: Intelligent routing with skills-based assignment
+* **Agent Monitoring**: Real-time status and performance analytics
+* **Call Recording**: Compliance recording with transcription
+* **Customer Context**: Screen pops with interaction history
+* **Supervisor Features**: Listen-in, whisper, and barge capabilities
+
+#### 1.4.7. Enterprise Features
+
+* **Multi-Device Sync**: Seamless experience across desktop, mobile, and web
+* **Federation**: Cross-organization communication with security controls
+* **Audit Logging**: Comprehensive activity tracking for compliance
+* **Moderation Tools**: Content filtering and user management
+* **Backup and Archive**: Message retention and data export
+
+#### 1.4.8. Example Scenario: Collaborative Meeting with Follow-up
+
+This scenario demonstrates how multiple QSIP features work together:
+
+1. **Meeting Setup**: Alice uses `/meeting` command to schedule a team meeting
+2. **Video Conference**: Team joins via INVITE/ACCEPT with screen sharing
+3. **Collaborative Whiteboard**: During meeting, team uses canvas for brainstorming
+4. **File Sharing**: Documents are shared in the meeting chat
+5. **Action Items**: Bot captures action items from transcript
+6. **Follow-up**: Workflow sends daily reminders until tasks complete
+7. **Reporting**: Analytics show meeting effectiveness metrics
+
+```json
+// Example flow showing integration of features
+COMMAND (slash) → CALENDAR (create) → INVITE (group video) → 
+MESSAGE (canvas) → TRANSCRIPT (add) → WORKFLOW (create follow-up) → 
+SUBSCRIPTION (daily summaries) → ANALYTICS (report)
+```
+
+These scenarios demonstrate QSIP's ability to handle modern communication needs through a single, unified protocol over QUIC transport.
 
 ## 2. Architectural Overview
 
@@ -710,6 +827,10 @@ This section defines the standard QSIP message types and their payloads.
   * `"audio_clip"`: A voice message (can be a specialization of "file").
   * `"video_clip"`: A short video message (can be a specialization of "file").
   * `"location"`: A geographical location.
+  * `"card"`: A rich card with structured content.
+  * `"carousel"`: A carousel of multiple cards or media items.
+  * `"canvas"`: A collaborative whiteboard or drawing canvas.
+  * `"embed"`: An embedded app or widget.
 * **`content`** (string or object, REQUIRED): The actual message content.
   * For `"text"`: A string containing the text. Markdown SHOULD be supported for rich text formatting.
   * For `"file"`, "image", "audio_clip", "video_clip": An object with details like:
@@ -721,12 +842,43 @@ This section defines the standard QSIP message types and their payloads.
     * **`thumbnail_url`** (string, OPTIONAL): For images/videos, a URL to a thumbnail.
     * **`duration_ms`** (number, OPTIONAL): For audio/video clips, duration in milliseconds.
   * For `"location": An object with latitude, longitude, and optionally accuracy, address.
+  * For `"card"`: An object with structured card content:
+    * **`title`** (string, OPTIONAL): Card title.
+    * **`subtitle`** (string, OPTIONAL): Card subtitle.
+    * **`body`** (string, OPTIONAL): Main card content (supports markdown).
+    * **`image_url`** (string, OPTIONAL): Card header image.
+    * **`actions`** (array of objects, OPTIONAL): Interactive buttons/actions. Each object:
+      * **`type`** (string, REQUIRED): Action type (e.g., "button", "link").
+      * **`label`** (string, REQUIRED): Display text.
+      * **`action_id`** (string, REQUIRED): Unique identifier for the action.
+      * **`url`** (string, OPTIONAL): For link actions.
+      * **`payload`** (object, OPTIONAL): Custom data for the action.
+  * For `"carousel"`: An object with:
+    * **`items`** (array of objects, REQUIRED): Array of card objects or media items.
+    * **`layout`** (string, OPTIONAL): Layout style (e.g., "horizontal", "vertical").
+  * For `"canvas"`: An object with:
+    * **`canvas_id`** (string, REQUIRED): Unique identifier for the canvas session.
+    * **`canvas_url`** (string, OPTIONAL): URL to access the canvas.
+    * **`preview_url`** (string, OPTIONAL): Static preview image of current canvas state.
+    * **`collaborative`** (boolean, OPTIONAL): Whether multiple users can edit simultaneously.
+  * For `"embed"`: An object with:
+    * **`embed_type`** (string, REQUIRED): Type of embed (e.g., "iframe", "widget", "mini-app").
+    * **`embed_url`** (string, REQUIRED): URL of the embedded content.
+    * **`height`** (number, OPTIONAL): Suggested height in pixels.
+    * **`width`** (number, OPTIONAL): Suggested width in pixels.
+    * **`permissions`** (array of strings, OPTIONAL): Required permissions (e.g., ["camera", "microphone"]).
 * **`thread_id`** (string, OPTIONAL): If this message is part of a thread, the message_id of the root message of the thread.
 * **`reply_to_message_id`** (string, OPTIONAL): If this message is a direct reply to another message (not necessarily threaded), its message_id.
 * **`mentions`** (array of objects, OPTIONAL): List of users mentioned in the message. Each object:
   * **`user_id`** (string, REQUIRED): The ID of the mentioned user.
   * **`display_text`** (string, REQUIRED): The text used for the mention (e.g., "@bob").
-  * **`schedule_time`** (string, OPTIONAL): ISO 8601 timestamp if this message is to be delivered or made visible at a future time. See also SCHEDULE message type for more robust scheduling.
+* **`schedule_time`** (string, OPTIONAL): ISO 8601 timestamp if this message is to be delivered or made visible at a future time. See also SCHEDULE message type for more robust scheduling.
+* **`ephemeral_ttl`** (number, OPTIONAL): Time-to-live in seconds for ephemeral/disappearing messages. After this duration from delivery, the message should be automatically deleted on all devices.
+* **`priority`** (string, OPTIONAL): Message priority level. Common values:
+  * `"urgent"`: High priority, may trigger special notifications.
+  * `"normal"`: Default priority.
+  * `"low"`: Low priority, may be batched or delayed.
+* **`attachments`** (array of objects, OPTIONAL): Additional attachments beyond the primary content. Each object follows the same structure as file content objects.
 
 **Example (Text Message)**:
 
@@ -745,7 +897,10 @@ This section defines the standard QSIP message types and their payloads.
   "type": "MESSAGE",
   "payload": {
     "message_type": "text",
-    "content": "Hello QSIP! This is a **bold** move for _RTC_.\nCheck out `code`."
+    "content": "Hello QSIP! This is a **bold** move for _RTC_.\nCheck out `code`.",
+    "ephemeral_ttl": 86400,
+    "priority": "normal",
+    "attachments": []
   }
 }
 ```
@@ -774,7 +929,93 @@ This section defines the standard QSIP message types and their payloads.
       "file_hash": "sha256:abcdef1234567890...",
       "url": "https://cdn.example.com/files/design-spec-v2.pdf"
     },
-    "thread_id": "m-root-design-thread-42"
+    "thread_id": "m-root-design-thread-42",
+    "ephemeral_ttl": 86400,
+    "priority": "normal",
+    "attachments": []
+  }
+}
+```
+
+**Example (Card Message)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "2a9f3d1b-95e4-4c3c-bd8c-9e6b1a2d3c4d",
+  "timestamp": "2025-06-01T01:22:00Z",
+  "from": {
+    "user_id": "u-bot-assistant",
+    "device_id": "d-bot-server"
+  },
+  "to": {
+    "user_id": "u-alice"
+  },
+  "type": "MESSAGE",
+  "payload": {
+    "message_type": "card",
+    "content": {
+      "title": "Meeting Reminder",
+      "subtitle": "Team Standup in 15 minutes",
+      "body": "Don't forget about today's standup meeting. We'll be discussing:\n- Sprint progress\n- Blockers\n- Today's goals",
+      "image_url": "https://cdn.example.com/meeting-reminder.png",
+      "actions": [
+        {
+          "type": "button",
+          "label": "Join Meeting",
+          "action_id": "join-meeting-123",
+          "payload": { "meeting_id": "standup-2025-06-01" }
+        },
+        {
+          "type": "button",
+          "label": "Snooze 5 min",
+          "action_id": "snooze-reminder",
+          "payload": { "duration": 300 }
+        }
+      ]
+    }
+  }
+}
+```
+
+**Example (Carousel Message)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "3b0a4e2c-06c5-5d4d-ce9e-1b8d3c5f6a7f",
+  "timestamp": "2025-06-01T01:23:00Z",
+  "from": {
+    "user_id": "u-bot-shop",
+    "device_id": "d-bot-server"
+  },
+  "to": {
+    "group_id": "g-team-announcements"
+  },
+  "type": "MESSAGE",
+  "payload": {
+    "message_type": "carousel",
+    "content": {
+      "layout": "horizontal",
+      "items": [
+        {
+          "title": "New Feature: Voice Notes",
+          "body": "Record and send voice messages directly in chat",
+          "image_url": "https://cdn.example.com/feature-voice.png",
+          "actions": [
+            { "type": "button", "label": "Try it now", "action_id": "try-voice", "payload": {} }
+          ]
+        },
+        {
+          "title": "Canvas Collaboration",
+          "body": "Draw and brainstorm together in real-time",
+          "image_url": "https://cdn.example.com/feature-canvas.png",
+          "actions": [
+            { "type": "button", "label": "Start Canvas", "action_id": "new-canvas", "payload": {} }
+          ]
+        }
+      ]
+    }
   }
 }
 ```
@@ -956,6 +1197,7 @@ This section defines the standard QSIP message types and their payloads.
 * **`target_user_id`** (string, OPTIONAL): For kick/set_role, the user_id being acted upon.
 * **`role`** (string, OPTIONAL): For set_role, the role to assign (e.g., "admin", "member", "moderator").
 * **`visibility`** (string, OPTIONAL): For create, e.g., "private", "public".
+* **`workspace_id`** (string, OPTIONAL): For workspace-based deployments, the workspace this group belongs to.
 
 **Example (Create Group)**:
 
@@ -979,7 +1221,8 @@ This section defines the standard QSIP message types and their payloads.
       "u-alice",
       "u-bob"
     ],
-    "visibility": "private"
+    "visibility": "private",
+    "workspace_id": "w-team-project"
   }
 }
 ```
@@ -1058,6 +1301,7 @@ This section defines the standard QSIP message types and their payloads.
 * **`agent_id`** (string, OPTIONAL): For assign_agent/agent_accept/agent_reject, the user_id of the agent.
 * **`details`** (object, OPTIONAL): For enqueue, any relevant information about the request (e.g., problem description, preferred language).
 * **`status_info`** (object, OPTIONAL, usually in server response): For get_status, e.g., { "position": 5, "estimated_wait_time_seconds": 300 }.
+* **`required_skills`** (array of strings, OPTIONAL): For enqueue, list of skills/tags required to handle this request (e.g., ["vpn", "network", "tier2"]).
 
 **Example (Enqueue Customer)**:
 
@@ -1082,7 +1326,8 @@ This section defines the standard QSIP message types and their payloads.
     "details": {
       "problem_summary": "Cannot connect to VPN",
       "product_version": "QSIP Client 2.5"
-    }
+    },
+    "required_skills": ["vpn", "network", "tier2"]
   }
 }
 ```
@@ -1532,441 +1777,1093 @@ This section defines the standard QSIP message types and their payloads.
 }
 ```
 
+### 5.26. SYNC
+
+**Purpose**: Used for synchronization between devices or sessions.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The synchronization action.
+  * `"request"`: Request synchronization.
+  * `"response"`: Respond to a synchronization request.
+* **`device_id`** (string, REQUIRED): The ID of the device requesting or responding to synchronization.
+* **`timestamp`** (string, REQUIRED): ISO 8601 timestamp of the synchronization action.
+* **`data`** (object, OPTIONAL): Any additional data related to the synchronization action.
+
+**Example (Request Synchronization)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "146d9e8f-0a1b-2c3d-4e5f-6g7h8i9j0k1l",
+  "timestamp": "2025-06-01T01:55:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To synchronization service/server
+  "type": "SYNC",
+  "payload": {
+    "action": "request",
+    "device_id": "d-bob-desktop",
+    "timestamp": "2025-06-01T01:55:00Z"
+  }
+}
+```
+
+### 5.27. PUSH
+
+**Purpose**: Used for push notifications to clients.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The push notification action.
+  * `"subscribe"`: Subscribe to a topic.
+  * `"unsubscribe"`: Unsubscribe from a topic.
+  * `"send"`: Send a push notification.
+* **`topic`** (string, REQUIRED): The topic to subscribe to or unsubscribe from.
+* **`data`** (object, REQUIRED): The data to send in the push notification.
+
+**Example (Subscribe to a Topic)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "157e0f9g-1b2c-3d4e-5f6g-7h8i9j0k1l2m",
+  "timestamp": "2025-06-01T02:00:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To push notification service/server
+  "type": "PUSH",
+  "payload": {
+    "action": "subscribe",
+    "topic": "new-feature-updates",
+    "data": {
+      "title": "New Feature: Voice Messages",
+      "message": "We've added voice messages to our app!"
+    }
+  }
+}
+```
+
+### 5.28. SEARCH
+
+**Purpose**: Used for searching for users, groups, or messages.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The search action.
+  * `"user"`: Search for users.
+  * `"group"`: Search for groups.
+  * `"message"`: Search for messages.
+* **`query`** (string, REQUIRED): The search query.
+* **`limit`** (number, OPTIONAL): Maximum number of results to return.
+* **`offset`** (number, OPTIONAL): Offset for paginated results.
+
+**Example (Search for Users)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "168f1g0h-2c3d-4e5f-6g7h-8i9j0k1l2m3n",
+  "timestamp": "2025-06-01T02:05:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To search service/server
+  "type": "SEARCH",
+  "payload": {
+    "action": "user",
+    "query": "John",
+    "limit": 10,
+    "offset": 0
+  }
+}
+```
+
+### 5.29. ROSTER
+
+**Purpose**: Used for managing user contacts or "roster" in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The roster action.
+  * `"add"`: Add a new contact.
+  * `"remove"`: Remove an existing contact.
+  * `"update"`: Update an existing contact's information.
+* **`contact_id`** (string, REQUIRED): The ID of the contact to add, remove, or update.
+* **`contact_info`** (object, REQUIRED): The information about the contact.
+
+**Example (Add a Contact)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "179g2h1i-3d4e-5f6g-7h8i-9j0k1l2m3n4o5p",
+  "timestamp": "2025-06-01T02:10:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To roster service/server
+  "type": "ROSTER",
+  "payload": {
+    "action": "add",
+    "contact_id": "c-john-doe",
+    "contact_info": {
+      "display_name": "John Doe",
+      "status": "online",
+      "last_seen": "2025-06-01T02:10:00Z"
+    }
+  }
+}
+```
+
+### 5.30. CHANNEL
+
+**Purpose**: Used for managing communication channels or "channels" in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The channel action.
+  * `"create"`: Create a new channel.
+  * `"delete"`: Delete an existing channel.
+  * `"join"`: Join a channel.
+  * `"leave"`: Leave a channel.
+* **`channel_id`** (string, REQUIRED): The ID of the channel to create, delete, or join.
+* **`name`** (string, OPTIONAL): The name of the channel.
+* **`description`** (string, OPTIONAL): The description of the channel.
+
+**Example (Create a Channel)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "180h3i2j-4e5f-6g7h-8i9j-0k1l2m3n4o5p6q",
+  "timestamp": "2025-06-01T02:15:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To channel service/server
+  "type": "CHANNEL",
+  "payload": {
+    "action": "create",
+    "channel_id": "c-team-project",
+    "name": "Team Project Chat",
+    "description": "Discussing project updates and milestones."
+  }
+}
+```
+
+### 5.31. BOT
+
+**Purpose**: Used for managing bots or automated agents in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The bot action.
+  * `"add"`: Add a new bot.
+  * `"remove"`: Remove an existing bot.
+  * `"update"`: Update an existing bot's information.
+* **`bot_id`** (string, REQUIRED): The ID of the bot to add, remove, or update.
+* **`bot_info`** (object, REQUIRED): The information about the bot.
+
+**Example (Add a Bot)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "191i4j3k-5f6g-7h8i-9j0k-1l2m3n4o5p6q7r",
+  "timestamp": "2025-06-01T02:20:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To bot service/server
+  "type": "BOT",
+  "payload": {
+    "action": "add",
+    "bot_id": "b-project-assistant",
+    "bot_info": {
+      "name": "Project Assistant",
+      "description": "Helps manage project tasks and communications."
+    }
+  }
+}
+```
+
+### 5.32. VOICEMAIL
+
+**Purpose**: Used for managing voice messages or voicemail in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The voicemail action.
+  * `"add"`: Add a new voicemail.
+  * `"remove"`: Remove an existing voicemail.
+  * `"get"`: Get information about a voicemail.
+* **`voicemail_id`** (string, REQUIRED): The ID of the voicemail to add, remove, or get.
+* **`voicemail_info`** (object, REQUIRED): The information about the voicemail.
+
+**Example (Add a Voicemail)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "1a2b3c4d-5e6f-7g8h-9i0j-klmnopqrstuv",
+  "timestamp": "2025-06-01T02:25:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To voicemail service/server
+  "type": "VOICEMAIL",
+  "payload": {
+    "action": "add",
+    "voicemail_id": "v-important-meeting",
+    "voicemail_info": {
+      "subject": "Important Meeting Notes",
+      "recording_url": "https://example.com/voicemail/important-meeting.mp3",
+      "transcription": "Transcription of the voicemail recording..."
+    }
+  }
+}
+```
+
+### 5.33. FEDERATION
+
+**Purpose**: Used for managing federation or cross-platform communication between different QSIP servers.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The federation action.
+  * `"add_server"`: Add a new server to the federation.
+  * `"remove_server"`: Remove an existing server from the federation.
+  * `"get_servers"`: Get information about all servers in the federation.
+* **`server_id`** (string, REQUIRED): The ID of the server to add, remove, or get.
+* **`server_info`** (object, REQUIRED): The information about the server.
+
+**Example (Add a Server to Federation)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "1b2c3d4e-5f6g-7h8i-9j0k-1l2m3n4o5p6q7r8s",
+  "timestamp": "2025-06-01T02:30:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To federation service/server
+  "type": "FEDERATION",
+  "payload": {
+    "action": "add_server",
+    "server_id": "s-new-server",
+    "server_info": {
+      "name": "New Server",
+      "description": "A new server for our federation.",
+      "url": "https://new-server.example.com"
+    }
+  }
+}
+```
+
+### 5.34. WORKSPACE
+
+**Purpose**: Used for managing workspaces or "workspaces" in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The workspace action.
+  * `"create"`: Create a new workspace.
+  * `"delete"`: Delete an existing workspace.
+  * `"get"`: Get information about a workspace.
+* **`workspace_id`** (string, REQUIRED): The ID of the workspace to create, delete, or get.
+* **`workspace_info`** (object, REQUIRED): The information about the workspace.
+
+**Example (Create a Workspace)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "1c2d3e4f-5g6h-7i8j-0k1l-2m3n4o5p6q7r8s9t",
+  "timestamp": "2025-06-01T02:35:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To workspace service/server
+  "type": "WORKSPACE",
+  "payload": {
+    "action": "create",
+    "workspace_id": "w-team-project",
+    "workspace_info": {
+      "name": "Team Project Workspace",
+      "description": "Collaboration space for the team project."
+    }
+  }
+}
+```
+
+### 5.35. STORY
+
+**Purpose**: Used for managing stories or "stories" in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The story action.
+  * `"add"`: Add a new story.
+  * `"remove"`: Remove an existing story.
+  * `"get"`: Get information about a story.
+* **`story_id`** (string, REQUIRED): The ID of the story to add, remove, or get.
+* **`story_info`** (object, REQUIRED): The information about the story.
+
+**Example (Add a Story)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "1d2e3f4g-5h6i-7j8k-0l1m-2n3o4p5q6r7s8t9u",
+  "timestamp": "2025-06-01T02:40:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To story service/server
+  "type": "STORY",
+  "payload": {
+    "action": "add",
+    "story_id": "s-team-project-story-001",
+    "story_info": {
+      "title": "Team Project Milestone",
+      "description": "Discussing progress on the team project.",
+      "image_url": "https://example.com/story-image.jpg"
+    }
+  }
+}
+```
+
+### 5.36. FORM
+
+**Purpose**: Used for creating and managing forms or "forms" in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The form action.
+  * `"create"`: Create a new form.
+  * `"delete"`: Delete an existing form.
+  * `"get"`: Get information about a form.
+* **`form_id`** (string, REQUIRED): The ID of the form to create, delete, or get.
+* **`form_info`** (object, REQUIRED): The information about the form.
+
+**Example (Create a Form)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "1e2f3g4h-5i6j-7k8l-0m1n-2o3p4q5r6s7t8u9v",
+  "timestamp": "2025-06-01T02:45:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To form service/server
+  "type": "FORM",
+  "payload": {
+    "action": "create",
+    "form_id": "f-feedback-survey",
+    "form_info": {
+      "title": "Feedback Survey",
+      "description": "Please provide your feedback on our services.",
+      "questions": [
+        { "id": "q1", "type": "text", "label": "How satisfied are you with our services?" },
+        { "id": "q2", "type": "textarea", "label": "What improvements would you like to see?" },
+        { "id": "q3", "type": "radio", "label": "How often do you use our services?", "options": ["Daily", "Weekly", "Monthly"] }
+      ]
+    }
+  }
+}
+```
+
+### 5.37. PAYMENT
+
+**Purpose**: Used for managing payments or "payments" in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The payment action.
+  * `"add"`: Add a new payment method.
+  * `"remove"`: Remove an existing payment method.
+  * `"get"`: Get information about a payment method.
+* **`payment_id`** (string, REQUIRED): The ID of the payment method to add, remove, or get.
+* **`payment_info`** (object, REQUIRED): The information about the payment method.
+
+**Example (Add a Payment Method)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "1f2g3h4i-5j6k-7l8m-0n1o-2p3q4r5s6t7u8v",
+  "timestamp": "2025-06-01T02:50:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To payment service/server
+  "type": "PAYMENT",
+  "payload": {
+    "action": "add",
+    "payment_id": "p-credit-card",
+    "payment_info": {
+      "card_number": "****-****-****-1234",
+      "expiration_date": "12/25",
+      "cvv": "123"
+    }
+  }
+}
+```
+
+### 5.38. TRANSCRIPT
+
+**Purpose**: Used for managing transcripts or "transcripts" in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The transcript action.
+  * `"add"`: Add a new transcript.
+  * `"remove"`: Remove an existing transcript.
+  * `"get"`: Get information about a transcript.
+* **`transcript_id`** (string, REQUIRED): The ID of the transcript to add, remove, or get.
+* **`transcript_info`** (object, REQUIRED): The information about the transcript.
+
+**Example (Add a Transcript)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "1g2h3i4j-5k6l-7m8n-0o1p-2q3r4s5t6u7v8w",
+  "timestamp": "2025-06-01T02:55:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To transcript service/server
+  "type": "TRANSCRIPT",
+  "payload": {
+    "action": "add",
+    "transcript_id": "t-important-meeting",
+    "transcript_info": {
+      "title": "Important Meeting Transcript",
+      "description": "Notes from the recent important meeting.",
+      "recording_url": "https://example.com/transcript/important-meeting.mp3"
+    }
+  }
+}
+```
+
+### 5.39. BACKUP
+
+**Purpose**: Used for managing backups or "backups" in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The backup action.
+  * `"add"`: Add a new backup.
+  * `"remove"`: Remove an existing backup.
+  * `"get"`: Get information about a backup.
+* **`backup_id`** (string, REQUIRED): The ID of the backup to add, remove, or get.
+* **`backup_info`** (object, REQUIRED): The information about the backup.
+
+**Example (Add a Backup)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "1h2i3j4k-5l6m-7n8o-0p1q-2r3s4t5u6v7w8x",
+  "timestamp": "2025-06-01T03:00:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To backup service/server
+  "type": "BACKUP",
+  "payload": {
+    "action": "add",
+    "backup_id": "b-important-data",
+    "backup_info": {
+      "description": "Important data backup",
+      "file_url": "https://example.com/backup/important-data.zip"
+    }
+  }
+}
+```
+
+### 5.40. MFA
+
+**Purpose**: Used for managing multi-factor authentication (MFA) or "MFA" in a messaging application.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The MFA action.
+  * `"add"`: Add a new MFA method.
+  * `"remove"`: Remove an existing MFA method.
+  * `"get"`: Get information about an MFA method.
+* **`mfa_id`** (string, REQUIRED): The ID of the MFA method to add, remove, or get.
+* **`mfa_info`** (object, REQUIRED): The information about the MFA method.
+
+**Example (Add an MFA Method)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "1i2j3k4l-5m6n-7o8p-0q1r-2s3t4u5v6w7x8y",
+  "timestamp": "2025-06-01T03:05:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To MFA service/server
+  "type": "MFA",
+  "payload": {
+    "action": "add",
+    "mfa_id": "m-security-question",
+    "mfa_info": {
+      "question": "What is your mother's maiden name?",
+      "answer": "Smith"
+    }
+  }
+}
+```
+
+### 5.41. SUBSCRIPTION
+
+**Purpose**: Used for managing content subscriptions to threads, channels, automated tools, or event-based notifications.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The subscription action.
+  * `"subscribe"`: Subscribe to content or events.
+  * `"unsubscribe"`: Unsubscribe from content or events.
+  * `"update"`: Update subscription preferences.
+  * `"list"`: List current subscriptions.
+* **`subscription_type`** (string, REQUIRED): Type of subscription.
+  * `"thread"`: Subscribe to thread updates.
+  * `"channel"`: Subscribe to channel activity.
+  * `"user"`: Subscribe to user activity.
+  * `"bot"`: Subscribe to bot/tool outputs.
+  * `"event"`: Subscribe to specific events.
+  * `"summary"`: Subscribe to periodic summaries.
+* **`target_id`** (string, REQUIRED for subscribe/unsubscribe): ID of the resource to subscribe to.
+* **`filters`** (object, OPTIONAL): Filtering criteria for the subscription.
+  * **`keywords`** (array of strings, OPTIONAL): Only notify for content containing these keywords.
+  * **`users`** (array of strings, OPTIONAL): Only notify for activity from these users.
+  * **`event_types`** (array of strings, OPTIONAL): Specific events to subscribe to.
+* **`delivery`** (object, OPTIONAL): Delivery preferences.
+  * **`frequency`** (string, OPTIONAL): For summaries (e.g., "hourly", "daily", "weekly").
+  * **`time`** (string, OPTIONAL): Preferred delivery time (ISO 8601 time).
+  * **`format`** (string, OPTIONAL): Delivery format (e.g., "full", "summary", "digest").
+  * **`max_items`** (number, OPTIONAL): Maximum items per delivery.
+
+**Example (Subscribe to Thread Summary)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "1j2k3l4m-5n6o-7p8q-0r1s-2t3u4v5w6x7y",
+  "timestamp": "2025-06-01T03:10:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {}, // To subscription service/server
+  "type": "SUBSCRIPTION",
+  "payload": {
+    "action": "subscribe",
+    "subscription_type": "summary",
+    "target_id": "thread-project-discussion-123",
+    "filters": {
+      "keywords": ["milestone", "deadline", "decision"],
+      "users": ["u-manager-bob", "u-lead-charlie"]
+    },
+    "delivery": {
+      "frequency": "daily",
+      "time": "09:00:00",
+      "format": "digest",
+      "max_items": 10
+    }
+  }
+}
+```
+
+**Example (Subscribe to Bot Output)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "2k3l4m5n-6o7p-8q9r-0s1t-2u3v4w5x6y7z",
+  "timestamp": "2025-06-01T03:15:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {},
+  "type": "SUBSCRIPTION",
+  "payload": {
+    "action": "subscribe",
+    "subscription_type": "bot",
+    "target_id": "bot-analytics-reporter",
+    "filters": {
+      "event_types": ["daily_report", "anomaly_detected"]
+    },
+    "delivery": {
+      "format": "full"
+    }
+  }
+}
+```
+
+### 5.42. INTERACTIVE
+
+**Purpose**: Handles user interactions with rich content elements like card buttons, form submissions, canvas actions, etc.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`interaction_type`** (string, REQUIRED): Type of interaction.
+  * `"button_click"`: User clicked a button in a card/carousel.
+  * `"form_submit"`: User submitted a form.
+  * `"canvas_action"`: Action on a collaborative canvas.
+  * `"embed_event"`: Event from an embedded app/widget.
+* **`source_message_id`** (string, REQUIRED): The message_id containing the interactive element.
+* **`action_id`** (string, REQUIRED): The action_id from the interactive element.
+* **`payload`** (object, OPTIONAL): Data associated with the interaction.
+  * For button clicks: The payload from the button definition.
+  * For form submissions: Form field values.
+  * For canvas actions: Drawing/editing data.
+* **`response_type`** (string, OPTIONAL): How to handle the response.
+  * `"ephemeral"`: Response visible only to the interacting user.
+  * `"in_channel"`: Response visible to all in the channel/chat.
+  * `"update"`: Update the original message.
+  * `"new_message"`: Send as a new message.
+
+**Example (Button Click Interaction)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "2m3n4o5p-6q7r-8s9t-0u1v-2w3x4y5z6a7b",
+  "timestamp": "2025-06-01T03:20:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {
+    "user_id": "u-bot-assistant"
+  },
+  "type": "INTERACTIVE",
+  "payload": {
+    "interaction_type": "button_click",
+    "source_message_id": "2a9f3d1b-95e4-4c3c-bd8c-9e6b1a2d3c4d",
+    "action_id": "join-meeting-123",
+    "payload": {
+      "meeting_id": "standup-2025-06-01"
+    },
+    "response_type": "ephemeral"
+  }
+}
+```
+
+### 5.43. COMMAND
+
+**Purpose**: Handles slash commands for quick actions and bot interactions.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`command_type`** (string, REQUIRED): Type of command.
+  * `"slash"`: Slash command (e.g., /remind, /call).
+  * `"menu"`: Context menu command.
+  * `"shortcut"`: Global or message shortcut.
+* **`command`** (string, REQUIRED): The command identifier (e.g., "remind", "status", "giphy").
+* **`arguments`** (array of strings, OPTIONAL): Command arguments parsed from user input.
+* **`raw_text`** (string, OPTIONAL): The full raw text after the command.
+* **`context`** (object, OPTIONAL): Context where command was invoked.
+  * **`channel_id`** (string, OPTIONAL): Channel where command was used.
+  * **`message_id`** (string, OPTIONAL): Message ID for message shortcuts.
+  * **`user_ids`** (array of strings, OPTIONAL): Selected users for user shortcuts.
+* **`response_url`** (string, OPTIONAL): URL to send delayed responses to.
+* **`trigger_id`** (string, OPTIONAL): ID for opening modals in response.
+
+**Example (Slash Command)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "3n4o5p6q-7r8s-9t0u-1v2w-3x4y5z6a7b",
+  "timestamp": "2025-06-01T03:25:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {
+    "user_id": "u-bot-reminder"
+  },
+  "type": "COMMAND",
+  "payload": {
+    "command_type": "slash",
+    "command": "remind",
+    "arguments": ["me", "in", "2h", "to"],
+    "raw_text": "me in 2h to review the PR",
+    "context": {
+      "channel_id": "g-dev-team"
+    },
+    "trigger_id": "trigger-123-abc"
+  }
+}
+```
+
+### 5.44. WEBHOOK
+
+**Purpose**: Manages webhook configurations and webhook event delivery for external integrations.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`webhook_type`** (string, REQUIRED): Type of webhook.
+  * `"incoming"`: External service sending data to QSIP.
+  * `"outgoing"`: QSIP sending events to external service.
+  * `"configure"`: Configure webhook settings.
+* **`action`** (string, REQUIRED for configure): Configuration action.
+  * `"create"`: Create new webhook.
+  * `"update"`: Update webhook configuration.
+  * `"delete"`: Remove webhook.
+  * `"list"`: List configured webhooks.
+* **`webhook_id`** (string, OPTIONAL): Unique identifier for the webhook.
+* **`url`** (string, OPTIONAL): Webhook endpoint URL.
+* **`events`** (array of strings, OPTIONAL): Events to subscribe to for outgoing webhooks.
+  * Examples: `["message.created", "user.joined", "file.shared"]`
+* **`secret`** (string, OPTIONAL): Shared secret for webhook signature verification.
+* **`headers`** (object, OPTIONAL): Custom headers to include in webhook requests.
+* **`data`** (object, OPTIONAL): Payload data for incoming webhooks.
+* **`channel_id`** (string, OPTIONAL): Default channel for incoming webhook messages.
+
+**Example (Incoming Webhook Data)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "4o5p6q7r-8s9t-0u1v-2w3x4y5z6a7b8c",
+  "timestamp": "2025-06-01T03:30:00Z",
+  "from": {
+    "user_id": "u-webhook-github",
+    "device_id": "d-webhook-service"
+  },
+  "to": {
+    "channel_id": "g-dev-notifications"
+  },
+  "type": "WEBHOOK",
+  "payload": {
+    "webhook_type": "incoming",
+    "webhook_id": "wh-github-123",
+    "data": {
+      "event": "push",
+      "repository": "myorg/myrepo",
+      "branch": "main",
+      "commits": [
+        {
+          "id": "abc123",
+          "message": "Fix: Resolved issue with webhooks",
+          "author": "developer@example.com"
+        }
+      ]
+    }
+  }
+}
+```
+
+### 5.45. WORKFLOW
+
+**Purpose**: Manages automated workflows that execute multi-step processes based on triggers and conditions.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The workflow action.
+  * `"create"`: Create a new workflow.
+  * `"update"`: Update an existing workflow.
+  * `"delete"`: Delete a workflow.
+  * `"execute"`: Manually trigger a workflow.
+  * `"pause"`: Pause a running workflow.
+  * `"resume"`: Resume a paused workflow.
+  * `"get_status"`: Get workflow execution status.
+* **`workflow_id`** (string, REQUIRED for all except create): Unique workflow identifier.
+* **`name`** (string, OPTIONAL): Human-readable workflow name.
+* **`trigger`** (object, REQUIRED for create): What initiates the workflow.
+  * **`type`** (string, REQUIRED): Trigger type (e.g., "schedule", "event", "webhook", "manual").
+  * **`config`** (object, OPTIONAL): Trigger-specific configuration.
+* **`steps`** (array of objects, REQUIRED for create): Workflow steps to execute.
+  * **`id`** (string, REQUIRED): Step identifier.
+  * **`type`** (string, REQUIRED): Step type (e.g., "send_message", "wait", "condition", "http_request").
+  * **`config`** (object, REQUIRED): Step-specific configuration.
+  * **`next`** (string or object, OPTIONAL): Next step(s) based on conditions.
+* **`variables`** (object, OPTIONAL): Workflow variables and their initial values.
+* **`execution_id`** (string, OPTIONAL): For status/control of specific execution.
+
+**Example (Create Approval Workflow)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "5p6q7r8s-9t0u-1v2w-3x4y-5z6a7b8c9d0e",
+  "timestamp": "2025-06-01T03:35:00Z",
+  "from": {
+    "user_id": "u-admin-alice",
+    "device_id": "d-alice-desktop"
+  },
+  "to": {},
+  "type": "WORKFLOW",
+  "payload": {
+    "action": "create",
+    "workflow_id": "wf-expense-approval",
+    "name": "Expense Approval Workflow",
+    "trigger": {
+      "type": "event",
+      "config": {
+        "event": "form.submitted",
+        "form_id": "expense-request"
+      }
+    },
+    "steps": [
+      {
+        "id": "notify_manager",
+        "type": "send_message",
+        "config": {
+          "to": "{{submitter.manager}}",
+          "template": "expense_approval_request",
+          "include_form_data": true
+        },
+        "next": "wait_approval"
+      },
+      {
+        "id": "wait_approval",
+        "type": "wait",
+        "config": {
+          "for": "user_action",
+          "timeout": "48h"
+        },
+        "next": {
+          "approved": "notify_approved",
+          "rejected": "notify_rejected",
+          "timeout": "escalate"
+        }
+      }
+    ]
+  }
+}
+```
+
+### 5.46. MODAL
+
+**Purpose**: Displays interactive modal dialogs for forms, confirmations, and complex interactions.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The modal action.
+  * `"open"`: Open a new modal.
+  * `"update"`: Update an existing modal.
+  * `"close"`: Close a modal.
+  * `"push"`: Push a new view onto the modal stack.
+  * `"submit"`: Submit modal form data.
+* **`trigger_id`** (string, REQUIRED for open): Temporary ID from interaction that triggered the modal.
+* **`view_id`** (string, OPTIONAL): Unique identifier for the modal view.
+* **`view`** (object, REQUIRED for open/update): Modal view definition.
+  * **`type`** (string, REQUIRED): View type (e.g., "modal", "home").
+  * **`title`** (string, REQUIRED): Modal title.
+  * **`blocks`** (array of objects, REQUIRED): UI blocks to display.
+  * **`submit`** (object, OPTIONAL): Submit button configuration.
+  * **`cancel`** (object, OPTIONAL): Cancel button configuration.
+  * **`close`** (object, OPTIONAL): Close button configuration.
+  * **`private_metadata`** (string, OPTIONAL): Hidden data passed to handlers.
+* **`values`** (object, OPTIONAL for submit): Form values from modal submission.
+* **`response_action`** (string, OPTIONAL): How to respond (e.g., "clear", "update", "push").
+
+**Example (Open Form Modal)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "6q7r8s9t-0u1v-2w3x-4y5z-6a7b8c9d0e1f",
+  "timestamp": "2025-06-01T03:40:00Z",
+  "from": {
+    "user_id": "u-bot-hr",
+    "device_id": "d-bot-server"
+  },
+  "to": {
+    "user_id": "u-alice"
+  },
+  "type": "MODAL",
+  "payload": {
+    "action": "open",
+    "trigger_id": "trigger-456-def",
+    "view": {
+      "type": "modal",
+      "title": "Request Time Off",
+      "view_id": "modal-time-off-request",
+      "blocks": [
+        {
+          "type": "input",
+          "block_id": "start_date",
+          "label": "Start Date",
+          "element": {
+            "type": "datepicker",
+            "action_id": "start_date_selected"
+          }
+        },
+        {
+          "type": "input",
+          "block_id": "end_date",
+          "label": "End Date",
+          "element": {
+            "type": "datepicker",
+            "action_id": "end_date_selected"
+          }
+        },
+        {
+          "type": "input",
+          "block_id": "reason",
+          "label": "Reason",
+          "element": {
+            "type": "textarea",
+            "action_id": "reason_input",
+            "placeholder": "Optional: Reason for time off"
+          }
+        }
+      ],
+      "submit": {
+        "type": "button",
+        "text": "Submit Request"
+      },
+      "close": {
+        "type": "button",
+        "text": "Cancel"
+      }
+    }
+  }
+}
+```
+
+### 5.47. CLIP
+
+**Purpose**: Manages short video messages (clips) for asynchronous video communication.
+
+**`session_id`**: null or omitted.
+
+**Payload Schema**:
+
+* **`action`** (string, REQUIRED): The clip action.
+  * `"record"`: Start recording a clip.
+  * `"upload"`: Upload a recorded clip.
+  * `"share"`: Share clip to channel/user.
+  * `"delete"`: Delete a clip.
+  * `"transcribe"`: Request transcription.
+* **`clip_id`** (string, REQUIRED for all except record): Unique clip identifier.
+* **`title`** (string, OPTIONAL): Clip title.
+* **`duration_ms`** (number, OPTIONAL): Clip duration in milliseconds.
+* **`recording_data`** (object, OPTIONAL for upload): Recording information.
+  * **`format`** (string, REQUIRED): Video format (e.g., "webm", "mp4").
+  * **`resolution`** (string, OPTIONAL): Video resolution (e.g., "1280x720").
+  * **`file_size`** (number, REQUIRED): Size in bytes.
+  * **`url`** (string, REQUIRED): URL to uploaded video file.
+  * **`thumbnail_url`** (string, OPTIONAL): URL to video thumbnail.
+* **`share_targets`** (array of objects, OPTIONAL for share): Where to share the clip.
+  * **`type`** (string, REQUIRED): Target type ("user", "channel", "group").
+  * **`id`** (string, REQUIRED): Target ID.
+* **`transcription`** (object, OPTIONAL): Transcription data.
+  * **`text`** (string): Full transcript text.
+  * **`language`** (string): Language code (e.g., "en-US").
+  * **`timestamps`** (array): Word-level timestamps.
+
+**Example (Share Recorded Clip)**:
+
+```json
+{
+  "qsip_version": "1.0",
+  "message_id": "7r8s9t0u-1v2w-3x4y-5z6a-7b8c9d0e1f2g",
+  "timestamp": "2025-06-01T03:45:00Z",
+  "from": {
+    "user_id": "u-alice",
+    "device_id": "d-alice-mobile"
+  },
+  "to": {},
+  "type": "CLIP",
+  "payload": {
+    "action": "share",
+    "clip_id": "clip-project-update-123",
+    "title": "Quick Project Update",
+    "duration_ms": 45000,
+    "recording_data": {
+      "format": "webm",
+      "resolution": "1280x720",
+      "file_size": 5242880,
+      "url": "https://cdn.example.com/clips/project-update-123.webm",
+      "thumbnail_url": "https://cdn.example.com/clips/project-update-123-thumb.jpg"
+    },
+    "share_targets": [
+      {
+        "type": "channel",
+        "id": "g-dev-team"
+      }
+    ],
+    "transcription": {
+      "text": "Hey team, quick update on the project. We've completed the API integration...",
+      "language": "en-US"
+    }
+  }
+}
+```
+
 ## 6. Session Management
 
 ### 6.1. Session Lifecycle
-
-A QSIP session typically refers to a real-time communication exchange, like a call or conference, identified by a unique session_id. The lifecycle generally follows:
-
-* **Initiation**: An endpoint sends an INVITE message with a new session_id.
-* **Negotiation**: The recipient(s) respond with ACCEPT (including their media parameters) or REJECT. ICE negotiation may occur via candidates in INVITE/ACCEPT or subsequent messages. Key exchange (KEY_EXCHANGE) for E2EE also happens during this phase.
-* **Active**: If accepted, the session becomes active. Media flows, and participants can send SESSION control messages, CHANNEL_UPDATEs, or MEDIA_UPDATEs.
-* **Termination**: Any participant or the server can end the session by sending an END message.
-
-### 6.2. State Machines
-
-Detailed state machines for sessions, calls, queues, and other stateful interactions are essential for consistent implementation. These will be provided in Appendix B. A simplified session state machine:
-
-| Current State | Event Received/Sent | Next State | Actions |
-|---------------|-------------------|------------|---------|
-| IDLE | Send INVITE | OUTGOING | Start INVITE timer |
-| IDLE | Receive INVITE | INCOMING | Notify user, start ringing timer |
-| OUTGOING | Receive ACCEPT | ACTIVE | Stop INVITE timer, establish media |
-| OUTGOING | Receive REJECT | TERMINATED | Stop INVITE timer, notify user |
-| OUTGOING | INVITE Timer Expires | TERMINATED | Notify user (timeout) |
-| INCOMING | Send ACCEPT | ACTIVE | Stop ringing timer, establish media |
-| INCOMING | Send REJECT | TERMINATED | Stop ringing timer, notify caller |
-| INCOMING | Ringing Timer Expires | TERMINATED | Auto-reject (missed call) |
-| ACTIVE | Send/Receive END | TERMINATED | Tear down media, notify user |
-| ACTIVE | Send/Receive SESSION (hold) | ON_HOLD | Update UI, potentially pause media |
-| ON_HOLD | Send/Receive SESSION (resume) | ACTIVE | Update UI, potentially resume media |
-| (Any) | Fatal Error | TERMINATED | Log error, notify user |
-
-## 7. Media Transport
-
-QSIP signaling orchestrates media sessions, but the media itself is transported separately, typically leveraging QUIC datagrams or other UDP-based mechanisms.
-
-### 7.1. Media Encapsulation
-
-When using QUIC datagrams [RFC9221], media packets (e.g., RTP [RFC3550] or SFrame packets) SHOULD be sent directly within the datagrams.
-
-Each datagram SHOULD ideally contain one media packet to minimize latency and simplify processing.
-
-The use of RTP-over-QUIC, as described in [draft-ietf-avtcore-rtp-over-quic], is RECOMMENDED for structuring media transport, including header compression and multiplexing if needed. Standard RTP clock rates (e.g., 90000 Hz for video, 48000 Hz for Opus audio) SHOULD be used.
-
-### 7.2. Codec Negotiation
-
-Codec negotiation occurs primarily during session setup via the codecs field in INVITE and ACCEPT messages.
-
-The offer/answer model is used: the initiator lists supported codecs, and the acceptor selects a common subset.
-
-MEDIA_UPDATE messages MAY be used for lightweight codec adjustments or adding/removing tracks with specific codecs mid-session.
-
-AV1 for video and Opus for audio are RECOMMENDED as default high-quality, royalty-free codecs. Support for other codecs like H.264 (for compatibility) MAY be included.
-
-### 7.3. SFrame End-to-End Encryption
-
-For end-to-end encrypted media, SFrame [draft-ietf-sframe] is RECOMMENDED.
-
-Cryptographic keys for SFrame MUST be exchanged using KEY_EXCHANGE messages over the secure QSIP signaling channel.
-
-The sframe_params in the KEY_EXCHANGE payload carry the necessary keying material, key IDs, and potentially epoch information for key ratcheting.
-
-Implementations MUST follow SFrame specifications for packet protection and key management.
-
-### 7.4. Simulcast and Scalable Video Coding (SVC)
-
-To support varying network conditions and receiver capabilities in group calls, QSIP implementations SHOULD support simulcast (sending multiple resolutions/bitrates of the same video source) and/or SVC (a single video stream with multiple scalable layers).
-
-The capabilities field in REGISTER and codec descriptions in INVITE/ACCEPT MAY indicate support for simulcast or SVC.
-
-Specific parameters for simulcast layers or SVC layers MAY be signaled via extensions to the codecs object or within MEDIA_UPDATE messages. This area may require further specification or reference to existing WebRTC practices (e.g., RID/MID extensions in SDP).
-
-### 7.5. NAT Traversal
-
-QSIP leverages QUIC's properties (single port, connection migration) which can simplify NAT traversal compared to multi-port TCP/UDP protocols.
-
-However, for P2P media, Interactive Connectivity Establishment (ICE) [RFC8445] is still RECOMMENDED.
-
-ICE candidates SHOULD be exchanged in INVITE and ACCEPT messages, or via subsequent dedicated messages if needed. The ice_candidates array in these messages serves this purpose.
-
-Support for STUN [RFC8489] and TURN [RFC8656] (both for signaling and media relays if QUIC proxying is used) is RECOMMENDED for robust connectivity. A relay=true flag or similar indication in ICE candidate JSON MAY signal a TURN candidate.
-
-The QSIP server can act as an ICE negotiation orchestrator or a TURN relay itself.
-
-## 8. Authentication and Authorization
-
-### 8.1. Device Registration
-
-Clients MUST register with a QSIP server using the REGISTER message (Section 5.1) after establishing a QUIC connection. This step is crucial for authenticating the user/device and establishing its presence.
-
-### 8.2. Token-based Authentication
-
-The auth_token field in the REGISTER message payload is the primary means of authentication.
-
-JSON Web Tokens (JWT) [RFC7519] are RECOMMENDED for auth_token due to their widespread support and ability to carry claims.
-
-The method of obtaining the initial auth_token (e.g., OAuth 2.0 flow, login with credentials to an IdP) is outside the scope of QSIP but MUST be secure.
-
-### 8.3. Token Lifecycle
-
-auth_tokens MUST have an expiration time. Clients SHOULD be prepared to refresh tokens.
-
-Servers MAY provide a new token (e.g., in a RECEIPT to REGISTER or a dedicated AUTH_REFRESH_SUCCESS message) or expect clients to use a refresh token via an out-of-band mechanism.
-
-If a token expires or is invalid, the server MUST reject QSIP messages requiring authentication with an appropriate ERROR (e.g., code 4011 "Unauthorized" or 4012 "TokenExpired").
-
-Servers MUST provide a mechanism for token revocation in case of compromised devices or user logout.
-
-## 9. Error Handling
-
-### 9.1. ERROR Message Type
-
-QSIP uses a dedicated ERROR message (Section 5.22) to report issues. This message includes a numeric code, a reason phrase, and optional details.
-
-### 9.2. Error Codes
-
-Error codes are grouped by range:
-
-* **3xxx** - Request-Specific Success with Caveats (Rarely used, for future extension if needed)
-
-* **4xxx** - Client-Side Errors: Problems with the client's request.
-  * **4000-4009**: General Client Errors
-    * **4001**: MalformedPayload (e.g., invalid JSON, missing required field)
-    * **4002**: InvalidMessageType
-    * **4003**: UnsupportedQsipVersion
-    * **4004**: MessageTooLarge
-  * **4010-4019**: Authentication/Authorization Errors
-    * **4011**: Unauthorized (general authentication failure)
-    * **4012**: TokenExpired
-    * **4013**: InvalidToken
-    * **4014**: InsufficientPermissions (user authenticated but not authorized for the action)
-    * **4015**: RegistrationRequired
-  * **4030-4039**: Request Forbidden/Denied
-    * **4031**: Forbidden (generic denial)
-    * **4032**: UserNotOnRoster / NotFriends
-    * **4033**: TargetUserBlocked
-  * **4040-4049**: Resource Not Found
-    * **4041**: UserNotFound
-    * **4042**: GroupNotFound
-    * **4043**: SessionNotFound
-    * **4044**: MessageNotFound
-    * **4045**: ResourceNotFound (generic)
-  * **4050-4059**: Method/Action Not Allowed
-    * **4051**: InvalidActionForState (e.g., trying to ACCEPT an already active session)
-    * **4052**: ActionNotSupported
-  * **4060-4069**: Media/Capability Issues
-    * **4061**: NoCommonCodec
-    * **4062**: UnsupportedMediaType
-    * **4063**: SdpNegotiationFailed
-  * **4080-4089**: Timeouts
-    * **4081**: RequestTimeout (general request timeout)
-  * **4290-4299**: Rate Limiting
-    * **4291**: TooManyRequests / RateLimitExceeded
-
-* **5xxx** - Server-Side Errors: Problems on the server prevented fulfilling a valid request.
-  * **5001**: InternalServerError
-  * **5002**: ServiceUnavailable (e.g., dependent service down)
-  * **5003**: DatabaseError
-  * **5004**: QueueFull
-
-* **6xxx** - Session/Media Specific Errors (Reported during an active session)
-  * **6001**: MediaConnectionFailed
-  * **6002**: KeyExchangeFailed
-
-This list is not exhaustive. See IANA Considerations (Section 14.2) for registration of new error codes.
-
-## 10. Extensibility
-
-### 10.1. Custom Message Types
-
-While this specification defines a core set of message types, QSIP is designed to be extensible. New message types MAY be defined. Organizations defining custom types SHOULD prefix them with a reverse domain name string (e.g., "com.example.custom_type") to avoid collisions, unless registered via an IANA process.
-
-### 10.2. Payload Extensions
-
-Custom fields MAY be added to the payload of standard or custom message types. Clients and servers MUST ignore unknown fields within a payload to ensure forward compatibility.
-
-## 11. Performance Considerations
-
-### 11.1. Latency
-
-QSIP aims for low latency by:
-
-Using QUIC's 0-RTT or 1-RTT connection establishment.
-Multiplexing all communication over a single connection, avoiding head-of-line blocking between streams.
-Using compact JSON payloads and QUIC datagrams for media.
-
-### 11.2. Bandwidth Efficiency
-
-JSON payloads are relatively verbose compared to binary formats. Implementations MAY use compression (e.g., DEFLATE, Brotli) at the QUIC stream level if negotiated, or a more compact serialization like CBOR if universally adopted in a future QSIP version or profile. For now, JSON is mandated for interoperability.
-Efficient codecs (Opus, AV1) are recommended for media.
-QUIC header and transport mechanisms are more efficient than TCP/TLS/HTTP stacks.
-
-### 11.3. Congestion Control
-
-QSIP relies on QUIC's built-in congestion control mechanisms (e.g., NewReno, CUBIC, BBR) to adapt to network conditions. Application-level rate limiting or prioritization (e.g., for critical signaling messages over large file transfer notifications) MAY be implemented by QSIP servers. DSCP marking recommendations MAY be provided in future revisions for QoS.
-
-## 12. Security Considerations
-
-Security is a fundamental design principle of QSIP.
-
-* **Transport Security**: All QSIP communication MUST be over QUIC, which mandates TLS 1.3 encryption. This protects against eavesdropping, tampering, and replay of signaling messages at the transport layer.
-
-* **Authentication**: Strong authentication of users and devices is enforced via the REGISTER message and auth_token. Implementations MUST use secure methods for token generation, management, and validation.
-
-* **End-to-End Encryption (E2EE)**: For media, SFrame is RECOMMENDED for E2EE. KEY_EXCHANGE messages facilitate secure transfer of SFrame keys over the already encrypted QSIP channel. For messaging, a similar E2EE scheme (like Signal Protocol, OLM/Megolm) MAY be implemented by encrypting the content of MESSAGE payloads, with keys exchanged via KEY_EXCHANGE or a similar mechanism.
-
-* **Authorization**: Servers MUST enforce authorization checks to ensure users can only perform actions and access data they are permitted to (e.g., joining private groups, moderating, accessing user profiles).
-
-* **Data Validation**: All incoming QSIP messages and payloads MUST be rigorously validated to prevent injection attacks, denial of service, or crashes due to malformed data. This includes checking data types, lengths, and allowed values.
-
-* **Denial of Service (DoS) Mitigation**: Servers SHOULD implement rate limiting, connection limits, and potentially QUIC-level mitigations (e.g., address validation) to protect against DoS attacks.
-
-* **Replay Protection**: QUIC/TLS provides replay protection at the transport layer. For application-level idempotency where needed (e.g., financial transactions if QSIP were extended), message_id can be used.
-
-* **Privacy**: See Section 13.
-
-* **Message Integrity**: TLS ensures the integrity of messages in transit.
-
-Implementers SHOULD consult standard security best practices for RTC applications and QUIC deployments.
-
-## 13. Privacy Considerations
-
-* **PII Minimization**: QSIP messages SHOULD only carry Personally Identifiable Information (PII) necessary for their function. For example, display_name in the from field is optional.
-
-* **Data Encryption**: All data is encrypted in transit by QUIC/TLS. E2EE for media (SFrame) and messaging content provides additional privacy against server-side eavesdropping.
-
-* **Logging**: Servers and clients SHOULD be configurable regarding the level of logging. Logs containing PII or sensitive message content MUST be protected with appropriate access controls and SHOULD be anonymized or pseudonymized where possible. Log retention policies SHOULD be defined.
-
-* **User Consent**: Applications using QSIP MUST obtain user consent for collecting and processing PII, in accordance with applicable privacy regulations (e.g., GDPR, CCPA).
-
-* **Presence and Profile Visibility**: Users SHOULD have granular control over who can see their presence information and detailed profile data.
-
-* **Analytics**: If analytics data is collected, it SHOULD be anonymized or aggregated to protect individual user privacy. Explicit user consent for analytics data collection might be required.
-
-* **Location Information**: If location data is shared (e.g., via MESSAGE type location), it MUST be with explicit user consent per instance or per application setting.
-
-## 14. IANA Considerations
-
-This document requests the creation of several IANA registries under a new "QUIC Signaling and Interaction Protocol (QSIP) Parameters" heading. The registration policy for new entries in these registries, unless otherwise specified, is "Specification Required" [RFC8126].
-
-### 14.1. QSIP Message Type Registry
-
-A new registry for QSIP Message Types is established. Each entry must include the Type Name (string) and a reference to its defining specification. Initial values are:
-
-| Type Name | Reference |
-|-----------|-----------|
-| REGISTER | This document |
-| PRESENCE | This document |
-| INVITE | This document |
-| ACCEPT | This document |
-| REJECT | This document |
-| END | This document |
-| SESSION | This document |
-| CHANNEL_UPDATE | This document |
-| MESSAGE | This document |
-| REACTION | This document |
-| RECEIPT | This document |
-| MESSAGE_ACTION | This document |
-| INFO | This document |
-| GROUP | This document |
-| POLL | This document |
-| QUEUE | This document |
-| CALENDAR | This document |
-| SCHEDULE | This document |
-| ANALYTICS | This document |
-| MODERATION | This document |
-| AUDIT_EVENT | This document |
-| ERROR | This document |
-| KEY_EXCHANGE | This document |
-| MEDIA_UPDATE | This document |
-| USER_PROFILE | This document |
-
-### 14.2. QSIP Error Code Registry
-
-A new registry for QSIP Error Codes is established. Each entry must include the Code (number), Reason Phrase (string), and a reference. Initial values are defined in Section 9.2 of this document.
-
-### 14.3. QSIP Info Type Registry
-
-A new registry for Info Types used within the INFO message's info_type payload field.
-
-| Info Type Name | Reference |
-|----------------|-----------|
-| typing_indicator | This document |
-
-### 14.4. QSIP Action Type Registries
-
-Separate registries for action fields within specific message types (e.g., SESSION, MESSAGE_ACTION, GROUP, POLL, QUEUE, CALENDAR, SCHEDULE, MODERATION, USER_PROFILE) are established. Initial values are those defined in the payload descriptions in Section 5.
-
-## 15. Backwards-Compatibility and Interoperability
-
-While QSIP is a new protocol, considerations for interworking with existing RTC ecosystems are important.
-
-15.1. QSIP-to-SIP Gateway
-A gateway can be implemented to translate between QSIP and SIP [RFC3261] domains.
-Signaling: INVITE/ACCEPT/REJECT/END can be mapped to SIP equivalents. session_id maps to Call-ID. from.user_id maps to SIP From URI.
-Media: Media would need to be transcoded or relayed if codecs/transports differ (e.g., QUIC Datagrams to SRTP over UDP). SDP from QSIP messages would be converted to standard SDP for SIP.
-Presence: QSIP PRESENCE could be mapped to SIP PUBLISH/SUBSCRIBE/NOTIFY for presence (SIMPLE).
-Challenges: Feature parity, especially for rich messaging and advanced QSIP types, will be difficult.
-
-15.2. QSIP-to-XMPP Gateway
-A gateway can map QSIP messaging and presence to XMPP [RFC6120], [RFC6121].
-Messaging: QSIP MESSAGE can be mapped to XMPP <message> stanzas. Rich content and file URLs would need careful translation.
-Presence: QSIP PRESENCE maps to XMPP <presence> stanzas.
-Groups: QSIP GROUP actions map to XMPP Multi-User Chat (MUC) [XEP-0045] operations.
-Calls: QSIP call signaling would need to be mapped to Jingle [XEP-0166] if audio/video interop is desired.
-
-15.3. RTP Fallback Considerations
-If a QSIP endpoint needs to interoperate with a legacy system that only supports RTP over UDP (not QUIC Datagrams), a media gateway (co-located with the QSIP/SIP or QSIP/XMPP gateway) would be required to transcode the media transport. The QSIP client itself would communicate using QSIP/QUIC to the gateway.
-
-## 16. JSON Schemas
-
-Formal JSON Schema definitions for the QSIP message envelope and the payload of each message type defined in this document SHOULD be provided in a companion document or an appendix to ensure clarity for implementers and to enable automated validation. (Placeholder: Full JSON Schemas will be detailed in Appendix C or a separate linked document.)
-
-## 17. References
-
-### 17.1. Normative References
-
-* **[RFC2119]** Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997.
-* **[RFC3550]** Schulzrinne, H., Casner, S., Frederick, R., and V. Jacobson, "RTP: A Transport Protocol for Real-Time Applications", STD 64, RFC 3550, DOI 10.17487/RFC3550, July 2003.
-* **[RFC8126]** Cotton, M., Leiba, B., and T. Narten, "Guidelines for Writing an IANA Considerations Section in RFCs", BCP 26, RFC 8126, DOI 10.17487/RFC8126, June 2017.
-* **[RFC8174]** Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174, May 2017.
-* **[RFC8445]** Keranen, A., Holmberg, C., and J. Rosenberg, "Interactive Connectivity Establishment (ICE): A Protocol for Network Address Translator (NAT) Traversal", RFC 8445, DOI 10.17487/RFC8445, July 2018.
-* **[RFC8446]** Rescorla, E., "The Transport Layer Security (TLS) Protocol Version 1.3", RFC 8446, DOI 10.17487/RFC8446, August 2018.
-* **[RFC8489]** Petit-Huguenin, M., Salgueiro, G., Rosenberg, J., Wing, D., Mahy, R., and P. Matthews, "Session Traversal Utilities for NAT (STUN)", RFC 8489, DOI 10.17487/RFC8489, February 2020.
-* **[RFC8656]** Reddy, T., Johnston, A., Matthews, P., and J. Rosenberg, "Traversal Using Relays around NAT (TURN): Relay Extensions to Session Traversal Utilities for NAT (STUN)", RFC 8656, DOI 10.17487/RFC8656, February 2020.
-* **[RFC9000]** Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based Multiplexed and Secure Transport", RFC 9000, DOI 10.17487/RFC9000, May 2021.
-* **[RFC9221]** Pauly, T., Kinnear, E., and D. Schinazi, "An Unreliable Datagram Extension to QUIC", RFC 9221, DOI 10.17487/RFC9221, March 2022.
-
-### 17.2. Informative References
-
-* **[RFC3261]** Rosenberg, J., Schulzrinne, H., Camarillo, G., Johnston, A., Peterson, J., Sparks, R., Handley, M., and E. Schooler, "SIP: Session Initiation Protocol", RFC 3261, DOI 10.17487/RFC3261, June 2002.
-* **[RFC6120]** Saint-Andre, P., "Extensible Messaging and Presence Protocol (XMPP): Core", RFC 6120, DOI 10.17487/RFC6120, March 2011.
-* **[RFC6121]** Saint-Andre, P., "Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence", RFC 6121, DOI 10.17487/RFC6121, March 2011.
-* **[RFC7519]** Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015.
-* **[draft-ietf-avtcore-rtp-over-quic]** Engelbart, M., et al., "RTP over QUIC", Work in Progress, Internet-Draft.
-* **[draft-ietf-sframe]** époque, E., et al., "Secure Frame (SFrame)", Work in Progress, Internet-Draft. (Note: Exact draft name may vary, this is illustrative)
-* **[XEP-0045]** Saint-Andre, P., "Multi-User Chat", XMPP Standards Foundation.
-* **[XEP-0166]** Ludwig, S., et al., "Jingle", XMPP Standards Foundation.
-
-## Appendix A: Example Flows
-
-(Textual descriptions of common flows. PlantUML or similar diagrams would be ideal in a full draft.)
-
-### A.1. Peer-to-Peer Audio/Video Call Setup
-
-1. Client A (Alice) -> Server: REGISTER
-2. Server -> Client A: RECEIPT (status: "registered")
-3. Client B (Bob) -> Server: REGISTER
-4. Server -> Client B: RECEIPT (status: "registered")
-5. Alice -> Server: INVITE (to: Bob, session_id: S1, media: audio/video, ICE candidates, SFrame offer)
-6. Server -> Bob: INVITE (from: Alice, session_id: S1, media, ICE, SFrame offer - forwarded)
-7. Bob -> Server: ACCEPT (to: Alice, session_id: S1, selected media, ICE candidates, SFrame answer)
-8. Server -> Alice: ACCEPT (from: Bob, session_id: S1, media, ICE, SFrame answer - forwarded)
-9. Alice <-> Bob: (ICE connectivity checks complete - P2P or via TURN)
-10. Alice -> Server: KEY_EXCHANGE (to: Bob, session_id: S1, SFrame key parameters for sending to Bob)
-11. Server -> Bob: KEY_EXCHANGE (from: Alice, to: Bob, session_id: S1, SFrame key parameters)
-12. Bob -> Server: KEY_EXCHANGE (to: Alice, session_id: S1, SFrame key parameters for sending to Alice)
-13. Server -> Alice: KEY_EXCHANGE (from: Bob, to: Alice, session_id: S1, SFrame key parameters)
-14. Alice <-> Bob: Encrypted media (SFrame over QUIC Datagrams or SRTP) flows.
-15. Alice -> Server: END (to: Bob, session_id: S1, reason: "hangup")
-16. Server -> Bob: END (from: Alice, session_id: S1, reason: "hangup")
-
-### A.2. Group Text Chat
-
-1. Alice -> Server: GROUP (action: "create", name: "Team Chat", members: [Bob, Charlie]) -> group_id: G1 returned
-2. Server -> Bob: GROUP (action: "invited_to_group", group_id: G1, inviter: Alice) (or similar notification)
-3. Server -> Charlie: GROUP (action: "invited_to_group", group_id: G1, inviter: Alice)
-4. Alice -> Server: MESSAGE (to: group_id: G1, content: "Hello team!")
-5. Server -> Alice: RECEIPT (target_message_id: M_Alice1, status: "delivered_to_server")
-6. Server -> Bob: MESSAGE (from: Alice, to: group_id: G1, content: "Hello team!")
-7. Server -> Charlie: MESSAGE (from: Alice, to: group_id: G1, content: "Hello team!")
-8. Bob -> Server: INFO (to: group_id: G1, info_type: "typing_indicator", is_typing: true)
-9. Server -> Alice: INFO (from: Bob, to: group_id: G1, ...)
-10. Server -> Charlie: INFO (from: Bob, to: group_id: G1, ...)
-11. Bob -> Server: MESSAGE (to: group_id: G1, content: "Hi Alice!")
-12. Server -> (Distributes Bob's message to Alice, Charlie; sends receipts)
-
-### A.3. Call Center Queue
-
-1. Customer -> Server: QUEUE (action: "enqueue", queue_id: "support", details: {...})
-2. Server -> Customer: RECEIPT (target_message_id: M_Cust1, status: "enqueued", payload: { item_id: I1, position: 5, est_wait: 300s })
-3. (Time passes, agents become available)
-4. Server -> AgentA: QUEUE (action: "offer_item", item_id: I1, customer_id: Customer, details: {...})
-5. AgentA -> Server: QUEUE (action: "agent_accept", item_id: I1, agent_id: AgentA)
-6. Server -> Customer: SESSION (action: "agent_connecting", agent_display_name: "Agent A") (or an INVITE for a call)
-7. Server -> AgentA: INVITE (to: Customer, session_id: S2, ...)
-8. (Call proceeds like P2P call)
-
-## Appendix B: Detailed State Machines
-
-(Placeholder: This section would contain formal state machine diagrams (e.g., UML or PlantUML source) for key QSIP entities like Sessions, Presence, Group Membership, and Queue Items. For brevity in this combined document, detailed diagrams are omitted but would be essential for a full IETF draft.)
-
-Key stateful entities include:
-
-* **Client Registration State**: Unregistered, Registering, Registered, RegistrationFailed.
-* **Session State (Call/Conference)**: IDLE, INVITING, RINGING (INCOMING/OUTGOING), CONNECTING, ACTIVE, ON_HOLD, RECONNECTING, TERMINATING, TERMINATED.
-* **Message State (for reliable messaging with receipts)**: UNSENT, SENT_TO_SERVER, DELIVERED_TO_RECIPIENT_SERVER, DELIVERED_TO_RECIPIENT_CLIENT, READ, FAILED.
-* **Queue Item State**: PENDING, OFFERED_TO_AGENT, ASSIGNED_TO_AGENT, ACTIVE_WITH_AGENT, RESOLVED, ABANDONED.
-
-## Appendix C: Comparative Analysis
-
-This table summarizes how the finalized QSIP specification addresses common RTC needs compared to existing WebRTC setups and commercial telecom APIs like Twilio, assuming QSIP is fully implemented as specified.
-
-| Capability | WebRTC (Baseline) | Twilio (Typical Commercial API) | QSIP (as specified) |
-|------------|-------------------|----------------------------------|---------------------|
-| Signaling Protocol | Undefined (App-specific: SIP, XMPP, custom WebSocket) | Proprietary REST/WebSocket APIs, SIP | Unified JSON over QUIC |
-| Transport | UDP for media (RTP), TCP/WebSocket for signaling | UDP/TCP (various internal) | Single QUIC connection (UDP) for signaling & media datagrams |
-| Connection Setup Latency | Higher (separate handshakes) | Optimized, but often multi-protocol | Very Low (QUIC 0-1 RTT) |
-| NAT Traversal (Media) | ICE/STUN/TURN (Complex) | Managed (Global Relay Network) | ICE/STUN/TURN (Simplified by single QUIC port) |
-| Security (Transport) | DTLS-SRTP (media), TLS (signaling) | TLS (API), SRTP (media) | QUIC (TLS 1.3) for all traffic by default |
-| End-to-End Encryption (Media) | Optional (SFrame emerging) | Optional/Varies | SFrame explicitly supported via KEY_EXCHANGE |
-| Rich Messaging Features | Not inherent (App-specific) | Yes (SMS, Chat APIs) | Native: Text, files, reactions, threads, receipts, edit/delete, polls, etc. |
-| Presence | Not inherent (App-specific) | Yes (e.g., TaskRouter agent status) | Native PRESENCE and USER_PROFILE messages |
-| Group Management | Not inherent (App-specific) | Yes (Video Rooms, Chat Channels) | Native GROUP messages |
-| Call Center / Queuing | Not inherent | Yes (TaskRouter, Flex) | Native QUEUE messages |
-| Codec Flexibility | Good (Opus, VP8/9, H264, AV1 emerging) | Good (Opus, VP8, H264) | Excellent (Opus, AV1 recommended), flexible negotiation |
-| Simulcast/SVC | Supported in implementations | Supported | Supported explicitly (signaled via capabilities/media negotiation) |
-| Extensibility | High (via application logic) | Via APIs and webhooks | High (Custom message types, payload extensions, IANA registries) |
-| Browser Native Support | Yes (for WebRTC media/data channels) | Yes (SDKs abstract underlying tech) | Requires QUIC-enabled environment (native apps, servers, modern browsers with QUIC API, or WebAssembly polyfill for some aspects) |
-| PSTN Integration | Via external gateways | Core feature | Via Gateways (QSIP-to-SIP, as specified in Sec 15) |
-| Global Media Relay | App/Service dependent | Core feature | Infrastructure dependent; protocol supports TURN for relaying. |
-| Developer Simplicity | Moderate-High (signaling complexity) | Good (SDKs, but API surface can be large) | Aimed for High (Unified protocol, JSON, clear message types) |
-| Standardization | Core media is IETF/W3C | Proprietary API | Proposed Open Standard (IETF-style draft) |
-
-**QSIP Advantages Highlighted by the Specification:**
-
-* **Unified & Simplified Stack**: Single protocol over a single port reduces complexity significantly.
-* **Performance**: Lower latency and potentially better resource utilization due to QUIC.
-* **Security by Default**: TLS 1.3 for all communications is a strong baseline.
-* **Comprehensive Feature Set**: Natively supports a broad range of RTC and collaboration features often requiring multiple protocols or services.
-* **Open & Extensible**: Designed as an open standard with clear extensibility points.
-
-## Authors' Addresses
-
-QSIP Working Group (Conceptual)
-Email: contact@example-qsip-wg.org (Illustrative)
-
----
-
-End of QSIP Specification Document
