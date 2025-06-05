@@ -2867,3 +2867,574 @@ This section defines the standard QSIP message types and their payloads.
 ## 6. Session Management
 
 ### 6.1. Session Lifecycle
+
+A QSIP session typically refers to a real-time communication exchange, like a call or conference, identified by a unique session_id. The lifecycle generally follows:
+
+* **Initiation**: An endpoint sends an INVITE message with a new session_id.
+* **Negotiation**: The recipient(s) respond with ACCEPT (including their media parameters) or REJECT. ICE negotiation may occur via candidates in INVITE/ACCEPT or subsequent messages. Key exchange (KEY_EXCHANGE) for E2EE also happens during this phase.
+* **Active**: If accepted, the session becomes active. Media flows, and participants can send SESSION control messages, CHANNEL_UPDATEs, or MEDIA_UPDATEs.
+* **Termination**: Any participant or the server can end the session by sending an END message.
+
+### 6.2. State Machines
+
+Detailed state machines for sessions, calls, queues, and other stateful interactions are essential for consistent implementation. These will be provided in Appendix B. A simplified session state machine:
+
+| Current State | Event Received/Sent | Next State | Actions |
+|---------------|-------------------|------------|---------|
+| IDLE | Send INVITE | OUTGOING | Start INVITE timer |
+| IDLE | Receive INVITE | INCOMING | Notify user, start ringing timer |
+| OUTGOING | Receive ACCEPT | ACTIVE | Stop INVITE timer, establish media |
+| OUTGOING | Receive REJECT | TERMINATED | Stop INVITE timer, notify user |
+| OUTGOING | INVITE Timer Expires | TERMINATED | Notify user (timeout) |
+| INCOMING | Send ACCEPT | ACTIVE | Stop ringing timer, establish media |
+| INCOMING | Send REJECT | TERMINATED | Stop ringing timer, notify caller |
+| INCOMING | Ringing Timer Expires | TERMINATED | Auto-reject (missed call) |
+| ACTIVE | Send/Receive END | TERMINATED | Tear down media, notify user |
+| ACTIVE | Send/Receive SESSION (hold) | ON_HOLD | Update UI, potentially pause media |
+| ON_HOLD | Send/Receive SESSION (resume) | ACTIVE | Update UI, potentially resume media |
+| (Any) | Fatal Error | TERMINATED | Log error, notify user |
+
+## 7. Media Transport
+
+QSIP signaling orchestrates media sessions, but the media itself is transported separately, typically leveraging QUIC datagrams or other UDP-based mechanisms.
+
+### 7.1. Media Encapsulation
+
+When using QUIC datagrams [RFC9221], media packets (e.g., RTP [RFC3550] or SFrame packets) SHOULD be sent directly within the datagrams.
+
+Each datagram SHOULD ideally contain one media packet to minimize latency and simplify processing.
+
+The use of RTP-over-QUIC, as described in [draft-ietf-avtcore-rtp-over-quic], is RECOMMENDED for structuring media transport, including header compression and multiplexing if needed. Standard RTP clock rates (e.g., 90000 Hz for video, 48000 Hz for Opus audio) SHOULD be used.
+
+### 7.2. Codec Negotiation
+
+Codec negotiation occurs primarily during session setup via the codecs field in INVITE and ACCEPT messages.
+
+The offer/answer model is used: the initiator lists supported codecs, and the acceptor selects a common subset.
+
+MEDIA_UPDATE messages MAY be used for lightweight codec adjustments or adding/removing tracks with specific codecs mid-session.
+
+AV1 for video and Opus for audio are RECOMMENDED as default high-quality, royalty-free codecs. Support for other codecs like H.264 (for compatibility) MAY be included.
+
+### 7.3. SFrame End-to-End Encryption
+
+For end-to-end encrypted media, SFrame [draft-ietf-sframe] is RECOMMENDED.
+
+Cryptographic keys for SFrame MUST be exchanged using KEY_EXCHANGE messages over the secure QSIP signaling channel.
+
+The sframe_params in the KEY_EXCHANGE payload carry the necessary keying material, key IDs, and potentially epoch information for key ratcheting.
+
+Implementations MUST follow SFrame specifications for packet protection and key management.
+
+### 7.4. Simulcast and Scalable Video Coding (SVC)
+
+To support varying network conditions and receiver capabilities in group calls, QSIP implementations SHOULD support simulcast (sending multiple resolutions/bitrates of the same video source) and/or SVC (a single video stream with multiple scalable layers).
+
+The capabilities field in REGISTER and codec descriptions in INVITE/ACCEPT MAY indicate support for simulcast or SVC.
+
+Specific parameters for simulcast layers or SVC layers MAY be signaled via extensions to the codecs object or within MEDIA_UPDATE messages. This area may require further specification or reference to existing WebRTC practices (e.g., RID/MID extensions in SDP).
+
+### 7.5. NAT Traversal
+
+QSIP leverages QUIC's properties (single port, connection migration) which can simplify NAT traversal compared to multi-port TCP/UDP protocols.
+
+However, for P2P media, Interactive Connectivity Establishment (ICE) [RFC8445] is still RECOMMENDED.
+
+ICE candidates SHOULD be exchanged in INVITE and ACCEPT messages, or via subsequent dedicated messages if needed. The ice_candidates array in these messages serves this purpose.
+
+Support for STUN [RFC8489] and TURN [RFC8656] (both for signaling and media relays if QUIC proxying is used) is RECOMMENDED for robust connectivity. A relay=true flag or similar indication in ICE candidate JSON MAY signal a TURN candidate.
+
+The QSIP server can act as an ICE negotiation orchestrator or a TURN relay itself.
+
+## 8. Authentication and Authorization
+
+### 8.1. Device Registration
+
+Clients MUST register with a QSIP server using the REGISTER message (Section 5.1) after establishing a QUIC connection. This step is crucial for authenticating the user/device and establishing its presence.
+
+### 8.2. Token-based Authentication
+
+The auth_token field in the REGISTER message payload is the primary means of authentication.
+
+JSON Web Tokens (JWT) [RFC7519] are RECOMMENDED for auth_token due to their widespread support and ability to carry claims.
+
+The method of obtaining the initial auth_token (e.g., OAuth 2.0 flow, login with credentials to an IdP) is outside the scope of QSIP but MUST be secure.
+
+### 8.3. Token Lifecycle
+
+auth_tokens MUST have an expiration time. Clients SHOULD be prepared to refresh tokens.
+
+Servers MAY provide a new token (e.g., in a RECEIPT to REGISTER or a dedicated AUTH_REFRESH_SUCCESS message) or expect clients to use a refresh token via an out-of-band mechanism.
+
+If a token expires or is invalid, the server MUST reject QSIP messages requiring authentication with an appropriate ERROR (e.g., code 4011 "Unauthorized" or 4012 "TokenExpired").
+
+Servers MUST provide a mechanism for token revocation in case of compromised devices or user logout.
+
+## 9. Error Handling
+
+### 9.1. ERROR Message Type
+
+QSIP uses a dedicated ERROR message (Section 5.22) to report issues. This message includes a numeric code, a reason phrase, and optional details.
+
+### 9.2. Error Codes
+
+Error codes are grouped by range:
+
+* **3xxx** - Request-Specific Success with Caveats (Rarely used, for future extension if needed)
+
+* **4xxx** - Client-Side Errors: Problems with the client's request.
+  * **4000-4009**: General Client Errors
+    * **4001**: MalformedPayload (e.g., invalid JSON, missing required field)
+    * **4002**: InvalidMessageType
+    * **4003**: UnsupportedQsipVersion
+    * **4004**: MessageTooLarge
+  * **4010-4019**: Authentication/Authorization Errors
+    * **4011**: Unauthorized (general authentication failure)
+    * **4012**: TokenExpired
+    * **4013**: InvalidToken
+    * **4014**: InsufficientPermissions (user authenticated but not authorized for the action)
+    * **4015**: RegistrationRequired
+  * **4030-4039**: Request Forbidden/Denied
+    * **4031**: Forbidden (generic denial)
+    * **4032**: UserNotOnRoster / NotFriends
+    * **4033**: TargetUserBlocked
+  * **4040-4049**: Resource Not Found
+    * **4041**: UserNotFound
+    * **4042**: GroupNotFound
+    * **4043**: SessionNotFound
+    * **4044**: MessageNotFound
+    * **4045**: ResourceNotFound (generic)
+  * **4050-4059**: Method/Action Not Allowed
+    * **4051**: InvalidActionForState (e.g., trying to ACCEPT an already active session)
+    * **4052**: ActionNotSupported
+  * **4060-4069**: Media/Capability Issues
+    * **4061**: NoCommonCodec
+    * **4062**: UnsupportedMediaType
+    * **4063**: SdpNegotiationFailed
+  * **4080-4089**: Timeouts
+    * **4081**: RequestTimeout (general request timeout)
+  * **4290-4299**: Rate Limiting
+    * **4291**: TooManyRequests / RateLimitExceeded
+
+* **5xxx** - Server-Side Errors: Problems on the server prevented fulfilling a valid request.
+  * **5001**: InternalServerError
+  * **5002**: ServiceUnavailable (e.g., dependent service down)
+  * **5003**: DatabaseError
+  * **5004**: QueueFull
+
+* **6xxx** - Session/Media Specific Errors (Reported during an active session)
+  * **6001**: MediaConnectionFailed
+  * **6002**: KeyExchangeFailed
+
+This list is not exhaustive. See IANA Considerations (Section 14.2) for registration of new error codes.
+
+## 10. Extensibility
+
+### 10.1. Custom Message Types
+
+While this specification defines a core set of message types, QSIP is designed to be extensible. New message types MAY be defined. Organizations defining custom types SHOULD prefix them with a reverse domain name string (e.g., "com.example.custom_type") to avoid collisions, unless registered via an IANA process.
+
+### 10.2. Payload Extensions
+
+Custom fields MAY be added to the payload of standard or custom message types. Clients and servers MUST ignore unknown fields within a payload to ensure forward compatibility.
+
+## 11. Performance Considerations
+
+### 11.1. Latency
+
+QSIP aims for low latency by:
+
+Using QUIC's 0-RTT or 1-RTT connection establishment.
+Multiplexing all communication over a single connection, avoiding head-of-line blocking between streams.
+Using compact JSON payloads and QUIC datagrams for media.
+
+### 11.2. Bandwidth Efficiency
+
+JSON payloads are relatively verbose compared to binary formats. Implementations MAY use compression (e.g., DEFLATE, Brotli) at the QUIC stream level if negotiated, or a more compact serialization like CBOR if universally adopted in a future QSIP version or profile. For now, JSON is mandated for interoperability.
+Efficient codecs (Opus, AV1) are recommended for media.
+QUIC header and transport mechanisms are more efficient than TCP/TLS/HTTP stacks.
+
+### 11.3. Congestion Control
+
+QSIP relies on QUIC's built-in congestion control mechanisms (e.g., NewReno, CUBIC, BBR) to adapt to network conditions. Application-level rate limiting or prioritization (e.g., for critical signaling messages over large file transfer notifications) MAY be implemented by QSIP servers. DSCP marking recommendations MAY be provided in future revisions for QoS.
+
+## 12. Security Considerations
+
+Security is a fundamental design principle of QSIP.
+
+* **Transport Security**: All QSIP communication MUST be over QUIC, which mandates TLS 1.3 encryption. This protects against eavesdropping, tampering, and replay of signaling messages at the transport layer.
+
+* **Authentication**: Strong authentication of users and devices is enforced via the REGISTER message and auth_token. Implementations MUST use secure methods for token generation, management, and validation.
+
+* **End-to-End Encryption (E2EE)**: For media, SFrame is RECOMMENDED for E2EE. KEY_EXCHANGE messages facilitate secure transfer of SFrame keys over the already encrypted QSIP channel. For messaging, a similar E2EE scheme (like Signal Protocol, OLM/Megolm) MAY be implemented by encrypting the content of MESSAGE payloads, with keys exchanged via KEY_EXCHANGE or a similar mechanism.
+
+* **Authorization**: Servers MUST enforce authorization checks to ensure users can only perform actions and access data they are permitted to (e.g., joining private groups, moderating, accessing user profiles).
+
+* **Data Validation**: All incoming QSIP messages and payloads MUST be rigorously validated to prevent injection attacks, denial of service, or crashes due to malformed data. This includes checking data types, lengths, and allowed values.
+
+* **Denial of Service (DoS) Mitigation**: Servers SHOULD implement rate limiting, connection limits, and potentially QUIC-level mitigations (e.g., address validation) to protect against DoS attacks.
+
+* **Replay Protection**: QUIC/TLS provides replay protection at the transport layer. For application-level idempotency where needed (e.g., financial transactions if QSIP were extended), message_id can be used.
+
+* **Privacy**: See Section 13.
+
+* **Message Integrity**: TLS ensures the integrity of messages in transit.
+
+Implementers SHOULD consult standard security best practices for RTC applications and QUIC deployments.
+
+## 13. Privacy Considerations
+
+* **PII Minimization**: QSIP messages SHOULD only carry Personally Identifiable Information (PII) necessary for their function. For example, display_name in the from field is optional.
+
+* **Data Encryption**: All data is encrypted in transit by QUIC/TLS. E2EE for media (SFrame) and messaging content provides additional privacy against server-side eavesdropping.
+
+* **Logging**: Servers and clients SHOULD be configurable regarding the level of logging. Logs containing PII or sensitive message content MUST be protected with appropriate access controls and SHOULD be anonymized or pseudonymized where possible. Log retention policies SHOULD be defined.
+
+* **User Consent**: Applications using QSIP MUST obtain user consent for collecting and processing PII, in accordance with applicable privacy regulations (e.g., GDPR, CCPA).
+
+* **Presence and Profile Visibility**: Users SHOULD have granular control over who can see their presence information and detailed profile data.
+
+* **Analytics**: If analytics data is collected, it SHOULD be anonymized or aggregated to protect individual user privacy. Explicit user consent for analytics data collection might be required.
+
+* **Location Information**: If location data is shared (e.g., via MESSAGE type location), it MUST be with explicit user consent per instance or per application setting.
+
+## 14. IANA Considerations
+
+This document requests the creation of several IANA registries under a new "QUIC Signaling and Interaction Protocol (QSIP) Parameters" heading. The registration policy for new entries in these registries, unless otherwise specified, is "Specification Required" [RFC8126].
+
+### 14.1. QSIP Message Type Registry
+
+A new registry for QSIP Message Types is established. Each entry must include the Type Name (string) and a reference to its defining specification. Initial values are:
+
+| Type Name | Reference |
+|-----------|-----------|
+| REGISTER | This document |
+| PRESENCE | This document |
+| INVITE | This document |
+| ACCEPT | This document |
+| REJECT | This document |
+| END | This document |
+| SESSION | This document |
+| CHANNEL_UPDATE | This document |
+| MESSAGE | This document |
+| REACTION | This document |
+| RECEIPT | This document |
+| MESSAGE_ACTION | This document |
+| INFO | This document |
+| GROUP | This document |
+| POLL | This document |
+| QUEUE | This document |
+| CALENDAR | This document |
+| SCHEDULE | This document |
+| ANALYTICS | This document |
+| MODERATION | This document |
+| AUDIT_EVENT | This document |
+| ERROR | This document |
+| KEY_EXCHANGE | This document |
+| MEDIA_UPDATE | This document |
+| USER_PROFILE | This document |
+| SYNC | This document |
+| PUSH | This document |
+| SEARCH | This document |
+| ROSTER | This document |
+| CHANNEL | This document |
+| BOT | This document |
+| VOICEMAIL | This document |
+| FEDERATION | This document |
+| WORKSPACE | This document |
+| STORY | This document |
+| FORM | This document |
+| PAYMENT | This document |
+| TRANSCRIPT | This document |
+| BACKUP | This document |
+| MFA | This document |
+| SUBSCRIPTION | This document |
+| INTERACTIVE | This document |
+| COMMAND | This document |
+| WEBHOOK | This document |
+| WORKFLOW | This document |
+| MODAL | This document |
+| CLIP | This document |
+
+### 14.2. QSIP Error Code Registry
+
+A new registry for QSIP Error Codes is established. Each entry must include the Code (number), Reason Phrase (string), and a reference. Initial values are defined in Section 9.2 of this document.
+
+### 14.3. QSIP Info Type Registry
+
+A new registry for Info Types used within the INFO message's info_type payload field.
+
+| Info Type Name | Reference |
+|----------------|-----------|
+| typing_indicator | This document |
+
+### 14.4. QSIP Action Type Registries
+
+Separate registries for action fields within specific message types (e.g., SESSION, MESSAGE_ACTION, GROUP, POLL, QUEUE, CALENDAR, SCHEDULE, MODERATION, USER_PROFILE) are established. Initial values are those defined in the payload descriptions in Section 5.
+
+## 15. Backwards-Compatibility and Interoperability
+
+While QSIP is a new protocol, considerations for interworking with existing RTC ecosystems are important.
+
+### 15.1. QSIP-to-SIP Gateway
+
+A gateway can be implemented to translate between QSIP and SIP [RFC3261] domains.
+Signaling: INVITE/ACCEPT/REJECT/END can be mapped to SIP equivalents. session_id maps to Call-ID. from.user_id maps to SIP From URI.
+Media: Media would need to be transcoded or relayed if codecs/transports differ (e.g., QUIC Datagrams to SRTP over UDP). SDP from QSIP messages would be converted to standard SDP for SIP.
+Presence: QSIP PRESENCE could be mapped to SIP PUBLISH/SUBSCRIBE/NOTIFY for presence (SIMPLE).
+Challenges: Feature parity, especially for rich messaging and advanced QSIP types, will be difficult.
+
+### 15.2. QSIP-to-XMPP Gateway
+
+A gateway can map QSIP messaging and presence to XMPP [RFC6120], [RFC6121].
+Messaging: QSIP MESSAGE can be mapped to XMPP <message> stanzas. Rich content and file URLs would need careful translation.
+Presence: QSIP PRESENCE maps to XMPP <presence> stanzas.
+Groups: QSIP GROUP actions map to XMPP Multi-User Chat (MUC) [XEP-0045] operations.
+Calls: QSIP call signaling would need to be mapped to Jingle [XEP-0166] if audio/video interop is desired.
+
+### 15.3. RTP Fallback Considerations
+
+If a QSIP endpoint needs to interoperate with a legacy system that only supports RTP over UDP (not QUIC Datagrams), a media gateway (co-located with the QSIP/SIP or QSIP/XMPP gateway) would be required to transcode the media transport. The QSIP client itself would communicate using QSIP/QUIC to the gateway.
+
+## 16. Multi-Device Synchronization
+
+QSIP supports multi-device usage where a user can be simultaneously connected from multiple devices with the same user_id but different device_ids. This section describes how state and messages are synchronized across devices.
+
+### 16.1. Device Management
+
+Each device MUST have a unique device_id that remains consistent across sessions. The device_id is included in the from field of all messages sent by that device.
+
+When a device registers using the REGISTER message, the server MUST:
+* Track the device as active for that user
+* Optionally send a SYNC message to other active devices notifying them of the new device
+* Begin including this device in message distribution for the user
+
+Devices can be explicitly managed using the USER_PROFILE message with appropriate actions to list, name, or remove devices.
+
+### 16.2. Message Synchronization
+
+When a message is sent to a user_id, the server MUST deliver it to all active devices for that user, with the following considerations:
+
+* **Outgoing Messages**: When a user sends a message from one device, the server SHOULD echo it back to all other devices of the same user with a special flag or receipt indicating it was sent by another device.
+* **Incoming Messages**: All devices receive incoming messages addressed to the user.
+* **Read Receipts**: When a message is read on one device, a RECEIPT with status "read" SHOULD be sent to all other devices of the same user.
+* **Message History**: New devices can request message history using the SYNC message type with appropriate parameters.
+
+### 16.3. State Synchronization
+
+Various types of state need to be synchronized across devices:
+
+* **Presence State**: When presence is updated on one device, it SHOULD be reflected on all devices.
+* **Call State**: Active calls can be transferred between devices using appropriate SESSION messages.
+* **Group Membership**: Changes to group membership are automatically reflected on all devices.
+* **User Profile**: Profile changes are synchronized to all devices via USER_PROFILE messages.
+
+The SYNC message type facilitates explicit synchronization requests and responses between devices and the server.
+
+## 17. Federation
+
+QSIP supports federation between different QSIP servers, allowing users on different servers to communicate seamlessly. Federation uses the FEDERATION message type and follows specific procedures for cross-server communication.
+
+### 17.1. Server Discovery
+
+When a user attempts to communicate with a user on a different server (identified by a user_id containing a domain component, e.g., "alice@server1.example.com"), the originating server MUST:
+
+* Extract the domain from the user_id
+* Perform DNS lookups for QSIP service records (SRV records for _qsip._udp)
+* Establish a server-to-server QUIC connection if not already established
+* Authenticate the remote server using TLS certificates
+
+### 17.2. Cross-Server Authentication
+
+Server-to-server connections MUST use mutual TLS authentication with the following requirements:
+
+* Each server MUST present a valid TLS certificate for its domain
+* Certificates MUST be validated against trusted certificate authorities
+* Servers MAY implement additional authentication mechanisms using the FEDERATION message type
+* Once authenticated, servers exchange capability information including supported QSIP versions and features
+
+### 17.3. Message Routing
+
+When routing messages between federated servers:
+
+* The originating server MUST validate that the sender is authorized to send from the claimed user_id
+* Messages are forwarded with the original envelope intact, but MAY include additional routing headers
+* The receiving server is responsible for local delivery to the target user
+* Error messages MUST be routed back to the originating server
+* Presence information MAY be shared between servers based on privacy settings and server policies
+
+Federation enables building decentralized QSIP networks while maintaining the protocol's security and feature guarantees.
+
+## 18. App Development
+
+QSIP supports a rich ecosystem of third-party applications and bots that can extend the platform's functionality. This section describes how developers can create, distribute, and manage QSIP applications.
+
+### 18.1. App Registration
+
+Applications MUST be registered with a QSIP server or app directory before they can be used. Registration involves:
+
+* **App Manifest**: A JSON document describing the app's capabilities, required permissions, commands, and interactive components.
+* **OAuth Configuration**: Apps use OAuth 2.0 for installation and authorization.
+* **Webhook URLs**: Endpoints for receiving events and interactions.
+* **Bot User**: Most apps include a bot user that acts on behalf of the app.
+
+Apps are identified by a unique `app_id` and authenticate using app-specific tokens separate from user tokens.
+
+### 18.2. Permissions and Scopes
+
+QSIP uses a granular permission system for apps:
+
+**Common Scopes**:
+* `messages:read` - Read messages in channels where installed
+* `messages:write` - Send messages as the app
+* `commands:write` - Register and handle slash commands
+* `users:read` - Access basic user information
+* `files:read` - Access files shared in workspace
+* `webhooks:write` - Create and manage webhooks
+* `channels:manage` - Create and modify channels
+* `calls:write` - Initiate and manage calls
+
+Apps MUST request only the minimum permissions needed and users MUST explicitly grant permissions during installation.
+
+### 18.3. App Distribution
+
+Apps can be distributed through:
+
+* **Private Installation**: Direct installation via OAuth flow
+* **Workspace App Directory**: Apps approved by workspace admins
+* **Public App Directory**: Vetted apps available to all QSIP users
+* **Enterprise Distribution**: Internal apps for specific organizations
+
+The distribution method determines the review process and available features. Public apps undergo security review and MUST follow additional guidelines for data handling and user privacy.
+
+## 19. JSON Schemas
+
+Formal JSON Schema definitions for the QSIP message envelope and the payload of each message type defined in this document SHOULD be provided in a companion document or an appendix to ensure clarity for implementers and to enable automated validation. (Placeholder: Full JSON Schemas will be detailed in Appendix C or a separate linked document.)
+
+## 20. References
+
+### 20.1. Normative References
+
+* **[RFC2119]** Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997.
+* **[RFC3550]** Schulzrinne, H., Casner, S., Frederick, R., and V. Jacobson, "RTP: A Transport Protocol for Real-Time Applications", STD 64, RFC 3550, DOI 10.17487/RFC3550, July 2003.
+* **[RFC8126]** Cotton, M., Leiba, B., and T. Narten, "Guidelines for Writing an IANA Considerations Section in RFCs", BCP 26, RFC 8126, DOI 10.17487/RFC8126, June 2017.
+* **[RFC8174]** Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174, May 2017.
+* **[RFC8445]** Keranen, A., Holmberg, C., and J. Rosenberg, "Interactive Connectivity Establishment (ICE): A Protocol for Network Address Translator (NAT) Traversal", RFC 8445, DOI 10.17487/RFC8445, July 2018.
+* **[RFC8446]** Rescorla, E., "The Transport Layer Security (TLS) Protocol Version 1.3", RFC 8446, DOI 10.17487/RFC8446, August 2018.
+* **[RFC8489]** Petit-Huguenin, M., Salgueiro, G., Rosenberg, J., Wing, D., Mahy, R., and P. Matthews, "Session Traversal Utilities for NAT (STUN)", RFC 8489, DOI 10.17487/RFC8489, February 2020.
+* **[RFC8656]** Reddy, T., Johnston, A., Matthews, P., and J. Rosenberg, "Traversal Using Relays around NAT (TURN): Relay Extensions to Session Traversal Utilities for NAT (STUN)", RFC 8656, DOI 10.17487/RFC8656, February 2020.
+* **[RFC9000]** Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based Multiplexed and Secure Transport", RFC 9000, DOI 10.17487/RFC9000, May 2021.
+* **[RFC9221]** Pauly, T., Kinnear, E., and D. Schinazi, "An Unreliable Datagram Extension to QUIC", RFC 9221, DOI 10.17487/RFC9221, March 2022.
+
+### 20.2. Informative References
+
+* **[RFC3261]** Rosenberg, J., Schulzrinne, H., Camarillo, G., Johnston, A., Peterson, J., Sparks, R., Handley, M., and E. Schooler, "SIP: Session Initiation Protocol", RFC 3261, DOI 10.17487/RFC3261, June 2002.
+* **[RFC6120]** Saint-Andre, P., "Extensible Messaging and Presence Protocol (XMPP): Core", RFC 6120, DOI 10.17487/RFC6120, March 2011.
+* **[RFC6121]** Saint-Andre, P., "Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence", RFC 6121, DOI 10.17487/RFC6121, March 2011.
+* **[RFC7519]** Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015.
+* **[draft-ietf-avtcore-rtp-over-quic]** Engelbart, M., et al., "RTP over QUIC", Work in Progress, Internet-Draft.
+* **[draft-ietf-sframe]** époque, E., et al., "Secure Frame (SFrame)", Work in Progress, Internet-Draft. (Note: Exact draft name may vary, this is illustrative)
+* **[XEP-0045]** Saint-Andre, P., "Multi-User Chat", XMPP Standards Foundation.
+* **[XEP-0166]** Ludwig, S., et al., "Jingle", XMPP Standards Foundation.
+
+## Appendix A: Example Flows
+
+(Textual descriptions of common flows. PlantUML or similar diagrams would be ideal in a full draft.)
+
+### A.1. Peer-to-Peer Audio/Video Call Setup
+
+1. Client A (Alice) -> Server: REGISTER
+2. Server -> Client A: RECEIPT (status: "registered")
+3. Client B (Bob) -> Server: REGISTER
+4. Server -> Client B: RECEIPT (status: "registered")
+5. Alice -> Server: INVITE (to: Bob, session_id: S1, media: audio/video, ICE candidates, SFrame offer)
+6. Server -> Bob: INVITE (from: Alice, session_id: S1, media, ICE, SFrame offer - forwarded)
+7. Bob -> Server: ACCEPT (to: Alice, session_id: S1, selected media, ICE candidates, SFrame answer)
+8. Server -> Alice: ACCEPT (from: Bob, session_id: S1, media, ICE, SFrame answer - forwarded)
+9. Alice <-> Bob: (ICE connectivity checks complete - P2P or via TURN)
+10. Alice -> Server: KEY_EXCHANGE (to: Bob, session_id: S1, SFrame key parameters for sending to Bob)
+11. Server -> Bob: KEY_EXCHANGE (from: Alice, to: Bob, session_id: S1, SFrame key parameters)
+12. Bob -> Server: KEY_EXCHANGE (to: Alice, session_id: S1, SFrame key parameters for sending to Alice)
+13. Server -> Alice: KEY_EXCHANGE (from: Bob, to: Alice, session_id: S1, SFrame key parameters)
+14. Alice <-> Bob: Encrypted media (SFrame over QUIC Datagrams or SRTP) flows.
+15. Alice -> Server: END (to: Bob, session_id: S1, reason: "hangup")
+16. Server -> Bob: END (from: Alice, session_id: S1, reason: "hangup")
+
+### A.2. Group Text Chat
+
+1. Alice -> Server: GROUP (action: "create", name: "Team Chat", members: [Bob, Charlie]) -> group_id: G1 returned
+2. Server -> Bob: GROUP (action: "invited_to_group", group_id: G1, inviter: Alice) (or similar notification)
+3. Server -> Charlie: GROUP (action: "invited_to_group", group_id: G1, inviter: Alice)
+4. Alice -> Server: MESSAGE (to: group_id: G1, content: "Hello team!")
+5. Server -> Alice: RECEIPT (target_message_id: M_Alice1, status: "delivered_to_server")
+6. Server -> Bob: MESSAGE (from: Alice, to: group_id: G1, content: "Hello team!")
+7. Server -> Charlie: MESSAGE (from: Alice, to: group_id: G1, content: "Hello team!")
+8. Bob -> Server: INFO (to: group_id: G1, info_type: "typing_indicator", is_typing: true)
+9. Server -> Alice: INFO (from: Bob, to: group_id: G1, ...)
+10. Server -> Charlie: INFO (from: Bob, to: group_id: G1, ...)
+11. Bob -> Server: MESSAGE (to: group_id: G1, content: "Hi Alice!")
+12. Server -> (Distributes Bob's message to Alice, Charlie; sends receipts)
+
+### A.3. Call Center Queue
+
+1. Customer -> Server: QUEUE (action: "enqueue", queue_id: "support", details: {...})
+2. Server -> Customer: RECEIPT (target_message_id: M_Cust1, status: "enqueued", payload: { item_id: I1, position: 5, est_wait: 300s })
+3. (Time passes, agents become available)
+4. Server -> AgentA: QUEUE (action: "offer_item", item_id: I1, customer_id: Customer, details: {...})
+5. AgentA -> Server: QUEUE (action: "agent_accept", item_id: I1, agent_id: AgentA)
+6. Server -> Customer: SESSION (action: "agent_connecting", agent_display_name: "Agent A") (or an INVITE for a call)
+7. Server -> AgentA: INVITE (to: Customer, session_id: S2, ...)
+8. (Call proceeds like P2P call)
+
+## Appendix B: Detailed State Machines
+
+(Placeholder: This section would contain formal state machine diagrams (e.g., UML or PlantUML source) for key QSIP entities like Sessions, Presence, Group Membership, and Queue Items. For brevity in this combined document, detailed diagrams are omitted but would be essential for a full IETF draft.)
+
+Key stateful entities include:
+
+* **Client Registration State**: Unregistered, Registering, Registered, RegistrationFailed.
+* **Session State (Call/Conference)**: IDLE, INVITING, RINGING (INCOMING/OUTGOING), CONNECTING, ACTIVE, ON_HOLD, RECONNECTING, TERMINATING, TERMINATED.
+* **Message State (for reliable messaging with receipts)**: UNSENT, SENT_TO_SERVER, DELIVERED_TO_RECIPIENT_SERVER, DELIVERED_TO_RECIPIENT_CLIENT, READ, FAILED.
+* **Queue Item State**: PENDING, OFFERED_TO_AGENT, ASSIGNED_TO_AGENT, ACTIVE_WITH_AGENT, RESOLVED, ABANDONED.
+
+## Appendix C: Comparative Analysis
+
+This table summarizes how the finalized QSIP specification addresses common RTC needs compared to existing WebRTC setups and commercial telecom APIs like Twilio, assuming QSIP is fully implemented as specified.
+
+| Capability | WebRTC (Baseline) | Twilio (Typical Commercial API) | QSIP (as specified) |
+|------------|-------------------|----------------------------------|---------------------|
+| Signaling Protocol | Undefined (App-specific: SIP, XMPP, custom WebSocket) | Proprietary REST/WebSocket APIs, SIP | Unified JSON over QUIC |
+| Transport | UDP for media (RTP), TCP/WebSocket for signaling | UDP/TCP (various internal) | Single QUIC connection (UDP) for signaling & media datagrams |
+| Connection Setup Latency | Higher (separate handshakes) | Optimized, but often multi-protocol | Very Low (QUIC 0-1 RTT) |
+| NAT Traversal (Media) | ICE/STUN/TURN (Complex) | Managed (Global Relay Network) | ICE/STUN/TURN (Simplified by single QUIC port) |
+| Security (Transport) | DTLS-SRTP (media), TLS (signaling) | TLS (API), SRTP (media) | QUIC (TLS 1.3) for all traffic by default |
+| End-to-End Encryption (Media) | Optional (SFrame emerging) | Optional/Varies | SFrame explicitly supported via KEY_EXCHANGE |
+| Rich Messaging Features | Not inherent (App-specific) | Yes (SMS, Chat APIs) | Native: Text, files, reactions, threads, receipts, edit/delete, polls, etc. |
+| Presence | Not inherent (App-specific) | Yes (e.g., TaskRouter agent status) | Native PRESENCE and USER_PROFILE messages |
+| Group Management | Not inherent (App-specific) | Yes (Video Rooms, Chat Channels) | Native GROUP messages |
+| Call Center / Queuing | Not inherent | Yes (TaskRouter, Flex) | Native QUEUE messages |
+| Codec Flexibility | Good (Opus, VP8/9, H264, AV1 emerging) | Good (Opus, VP8, H264) | Excellent (Opus, AV1 recommended), flexible negotiation |
+| Simulcast/SVC | Supported in implementations | Supported | Supported explicitly (signaled via capabilities/media negotiation) |
+| Extensibility | High (via application logic) | Via APIs and webhooks | High (Custom message types, payload extensions, IANA registries) |
+| Browser Native Support | Yes (for WebRTC media/data channels) | Yes (SDKs abstract underlying tech) | Requires QUIC-enabled environment (native apps, servers, modern browsers with QUIC API, or WebAssembly polyfill for some aspects) |
+| PSTN Integration | Via external gateways | Core feature | Via Gateways (QSIP-to-SIP, as specified in Sec 15) |
+| Global Media Relay | App/Service dependent | Core feature | Infrastructure dependent; protocol supports TURN for relaying. |
+| Developer Simplicity | Moderate-High (signaling complexity) | Good (SDKs, but API surface can be large) | Aimed for High (Unified protocol, JSON, clear message types) |
+| Standardization | Core media is IETF/W3C | Proprietary API | Proposed Open Standard (IETF-style draft) |
+
+**QSIP Advantages Highlighted by the Specification:**
+
+* **Unified & Simplified Stack**: Single protocol over a single port reduces complexity significantly.
+* **Performance**: Lower latency and potentially better resource utilization due to QUIC.
+* **Security by Default**: TLS 1.3 for all communications is a strong baseline.
+* **Comprehensive Feature Set**: Natively supports a broad range of RTC and collaboration features often requiring multiple protocols or services.
+* **Open & Extensible**: Designed as an open standard with clear extensibility points.
+
+## Authors' Addresses
+
+QSIP Working Group (Conceptual)
+Email: contact@example-qsip-wg.org (Illustrative)
+
+---
+
+End of QSIP Specification Document
