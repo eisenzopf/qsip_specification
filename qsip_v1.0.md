@@ -1,5 +1,5 @@
-# The QUIC Signaling and Interaction Protocol (QSIP)
-# draft-qsip-core-03
+# The QUIC Signaling and Real-time Protocol (QSRP)
+# draft-QSRP-core-03
 
 |             |                                   |
 | :---------- | :-------------------------------- |
@@ -7,7 +7,7 @@
 | **Date**    | 2025-06-02                        |
 | **Status**  | Working Draft                     |
 | **Expires** | 2025-12-02                        |
-| **Authors** | QSIP Working Group (Conceptual)   |
+| **Authors** | QSRP Working Group (Conceptual)   |
 
 ## Status of this Memo
 
@@ -19,7 +19,7 @@ Internet-Drafts are draft documents valid for a maximum of six months and may be
 
 ## Abstract
 
-The QUIC Signaling and Interaction Protocol (QSIP) provides a single-port, low-latency, secure signaling and media transport system for real-time communications (RTC). It aims to unify the functionality traditionally delivered by disparate protocols like SIP, XMPP, and WebRTC signaling mechanisms, while leveraging the strengths of QUIC for transport. QSIP supports a wide range of communication scenarios, including peer-to-peer calls, group conferences, instant messaging, presence, file sharing, and call center operations, all over a single QUIC connection. This document defines the core QSIP message envelope, message types, semantics, state considerations, media transport integration, and security model.
+The QUIC Signaling and Interaction Protocol (QSRP) provides a single-port, low-latency, secure signaling and media transport system for real-time communications (RTC). It aims to unify the functionality traditionally delivered by disparate protocols like SIP, XMPP, and WebRTC signaling mechanisms, while leveraging the strengths of QUIC for transport. QSRP supports a wide range of communication scenarios, including peer-to-peer calls, group conferences, instant messaging, presence, file sharing, and call center operations, all over a single QUIC connection. This document defines the core QSRP message envelope, message types, semantics, state considerations, media transport integration, and security model.
 
 ## Conventions and Terminology
 
@@ -115,13 +115,13 @@ The key words "**MUST**", "**MUST NOT**", "**REQUIRED**", "**SHALL**", "**SHALL 
 - [12. Security Considerations](#12-security-considerations)
 - [13. Privacy Considerations](#13-privacy-considerations)
 - [14. IANA Considerations](#14-iana-considerations)
-  - [14.1. QSIP Message Type Registry](#141-qsip-message-type-registry)
-  - [14.2. QSIP Error Code Registry](#142-qsip-error-code-registry)
-  - [14.3. QSIP Info Type Registry](#143-qsip-info-type-registry)
-  - [14.4. QSIP Action Type Registries](#144-qsip-action-type-registries)
+  - [14.1. QSRP Message Type Registry](#141-QSRP-message-type-registry)
+  - [14.2. QSRP Error Code Registry](#142-QSRP-error-code-registry)
+  - [14.3. QSRP Info Type Registry](#143-QSRP-info-type-registry)
+  - [14.4. QSRP Action Type Registries](#144-QSRP-action-type-registries)
 - [15. Backwards-Compatibility and Interoperability](#15-backwards-compatibility-and-interoperability)
-  - [15.1. QSIP-to-SIP Gateway](#151-qsip-to-sip-gateway)
-  - [15.2. QSIP-to-XMPP Gateway](#152-qsip-to-xmpp-gateway)
+  - [15.1. QSRP-to-SIP Gateway](#151-QSRP-to-sip-gateway)
+  - [15.2. QSRP-to-XMPP Gateway](#152-QSRP-to-xmpp-gateway)
   - [15.3. RTP Fallback Considerations](#153-rtp-fallback-considerations)
 - [16. Multi-Device Synchronization](#16-multi-device-synchronization)
   - [16.1. Device Management](#161-device-management)
@@ -150,13 +150,13 @@ The key words "**MUST**", "**MUST NOT**", "**REQUIRED**", "**SHALL**", "**SHALL 
 
 ### 1.1. Purpose
 
-The QUIC Signaling and Interaction Protocol (QSIP) is designed to provide a unified, efficient, and secure framework for real-time communications (RTC) and interactive applications. It aims to simplify the complex landscape of RTC protocols by leveraging QUIC [RFC9000] as its primary transport. QSIP addresses the signaling, messaging, presence, session management, and media orchestration needs for a wide array of use cases, including peer-to-peer (P2P) calls, group conferences, instant messaging, call centers, and collaborative applications.
+The QUIC Signaling and Interaction Protocol (QSRP) is designed to provide a unified, efficient, and secure framework for real-time communications (RTC) and interactive applications. It aims to simplify the complex landscape of RTC protocols by leveraging QUIC [RFC9000] as its primary transport. QSRP addresses the signaling, messaging, presence, session management, and media orchestration needs for a wide array of use cases, including peer-to-peer (P2P) calls, group conferences, instant messaging, call centers, and collaborative applications.
 
-By consolidating these functions over a single QUIC connection, QSIP intends to reduce connection setup latency, improve NAT traversal, enhance security by default, and provide a more streamlined development experience compared to traditional RTC stacks that often involve multiple protocols (e.g., SIP, XMPP, HTTP, RTP) and ports.
+By consolidating these functions over a single QUIC connection, QSRP intends to reduce connection setup latency, improve NAT traversal, enhance security by default, and provide a more streamlined development experience compared to traditional RTC stacks that often involve multiple protocols (e.g., SIP, XMPP, HTTP, RTP) and ports.
 
 ### 1.2. Design Goals
 
-QSIP development is guided by the following primary design goals:
+QSRP development is guided by the following primary design goals:
 
 *   **Single Port Operation**: Utilize a single UDP port for all signaling, messaging, and media-related datagrams via QUIC, simplifying network configuration and NAT traversal.
 *   **Low Latency**: Achieve significantly faster session setup and message delivery times compared to traditional protocols by leveraging QUIC's 0-RTT/1-RTT handshakes and multiplexing capabilities.
@@ -169,9 +169,9 @@ QSIP development is guided by the following primary design goals:
 
 ### 1.3. Weaknesses of Existing Protocols
 
-QSIP aims to address several limitations observed in traditional RTC and messaging protocols:
+QSRP aims to address several limitations observed in traditional RTC and messaging protocols:
 
-| Issue                      | SIP / RTP                                 | XMPP                                     | WebRTC (Signaling is undefined)          | QSIP Solution                                                                  |
+| Issue                      | SIP / RTP                                 | XMPP                                     | WebRTC (Signaling is undefined)          | QSRP Solution                                                                  |
 | :------------------------- | :---------------------------------------- | :--------------------------------------- | :--------------------------------------- | :----------------------------------------------------------------------------- |
 | **Multiple Ports/NAT**     | **Yes** (SIP + multiple RTP/RTCP ports)   | Sometimes (core + extensions)            | **Yes** (Signaling + multiple RTP/RTCP)  | **Single UDP port** via QUIC for all streams.                                  |
 | **High Handshake Latency** | Yes (TCP/TLS + SIP handshake)             | Moderate (TCP/TLS + XMPP handshake)      | Yes (WebSocket/TLS + SDP negotiation)    | **0-1 RTT** QUIC handshake, multiplexed streams.                               |
@@ -182,7 +182,7 @@ QSIP aims to address several limitations observed in traditional RTC and messagi
 
 ### 1.4. Supported Scenarios
 
-QSIP is designed to support a comprehensive range of modern communication and collaboration scenarios. The following examples demonstrate the protocol's versatility:
+QSRP is designed to support a comprehensive range of modern communication and collaboration scenarios. The following examples demonstrate the protocol's versatility:
 
 #### 1.4.1. Real-Time Communication
 
@@ -243,7 +243,7 @@ QSIP is designed to support a comprehensive range of modern communication and co
 
 #### 1.4.8. Example Scenario: Collaborative Meeting with Follow-up
 
-This scenario demonstrates how multiple QSIP features work together:
+This scenario demonstrates how multiple QSRP features work together:
 
 1. **Meeting Setup**: Alice uses `/meeting` command to schedule a team meeting
 2. **Video Conference**: Team joins via INVITE/ACCEPT with screen sharing
@@ -260,15 +260,15 @@ MESSAGE (canvas) → TRANSCRIPT (add) → WORKFLOW (create follow-up) →
 SUBSCRIPTION (daily summaries) → ANALYTICS (report)
 ```
 
-These scenarios demonstrate QSIP's ability to handle modern communication needs through a single, unified protocol over QUIC transport.
+These scenarios demonstrate QSRP's ability to handle modern communication needs through a single, unified protocol over QUIC transport.
 
 ## 2. Architectural Overview
 
-QSIP operates on a client-server model, where clients (endpoints) communicate with a QSIP server, or directly with other clients in P2P scenarios once orchestrated by a server. A QSIP server typically handles user registration, authentication, presence, message routing, group management, and call orchestration. For P2P media, the server may facilitate NAT traversal (e.g., ICE negotiation) and then step out of the media path. For group communication, a Selective Forwarding Unit (SFU) or Multipoint Control Unit (MCU) functionality can be integrated with or act as a QSIP server/endpoint.
+QSRP operates on a client-server model, where clients (endpoints) communicate with a QSRP server, or directly with other clients in P2P scenarios once orchestrated by a server. A QSRP server typically handles user registration, authentication, presence, message routing, group management, and call orchestration. For P2P media, the server may facilitate NAT traversal (e.g., ICE negotiation) and then step out of the media path. For group communication, a Selective Forwarding Unit (SFU) or Multipoint Control Unit (MCU) functionality can be integrated with or act as a QSRP server/endpoint.
 
 ```
 ┌──────────┐ reliable QUIC stream(s) ┌────────────┐ reliable QUIC stream(s) ┌──────────┐
-│ Client A │ ◄══════ QSIP Signaling ══════► │ QSIP Server/ │ ◄══════ QSIP Signaling ══════► │ Client B │
+│ Client A │ ◄══════ QSRP Signaling ══════► │ QSRP Server/ │ ◄══════ QSRP Signaling ══════► │ Client B │
 │          │                                │     SFU      │                                │          │
 │          │ ════ QUIC Datagrams (Media) ═► │              │ ◄════ QUIC Datagrams (Media) ══ │          │
 └──────────┘                                └────────────┘                                └──────────┘
@@ -279,7 +279,7 @@ In a pure P2P media scenario after server-facilitated setup:
 
 ```
 ┌──────────┐ reliable QUIC stream (signaling) ┌────────────┐
-│ Client A │ ◄════════════════════════════════► │ QSIP Server│
+│ Client A │ ◄════════════════════════════════► │ QSRP Server│
 └──────────┘                                  └────────────┘
                            │
     Reliable QUIC stream (signaling to B via Server, or direct if supported)
@@ -298,31 +298,31 @@ All interactions, whether signaling messages, text messages, or media datagrams,
 
 ### 3.1. QUIC
 
-QSIP **MUST** be transported over QUIC version 1 [RFC9000] or later compatible versions. QUIC provides a secure, reliable, and low-latency transport layer, incorporating features like stream multiplexing, per-stream flow control, and mandatory TLS 1.3 [RFC8446] encryption.
+QSRP **MUST** be transported over QUIC version 1 [RFC9000] or later compatible versions. QUIC provides a secure, reliable, and low-latency transport layer, incorporating features like stream multiplexing, per-stream flow control, and mandatory TLS 1.3 [RFC8446] encryption.
 
 ### 3.2. Port
 
-QSIP services **SHOULD** listen on UDP port **4433** by default. However, deployments **MAY** use other ports if explicitly configured. The use of a distinct default port helps in network identification and firewall configuration.
+QSRP services **SHOULD** listen on UDP port **4433** by default. However, deployments **MAY** use other ports if explicitly configured. The use of a distinct default port helps in network identification and firewall configuration.
 
 ### 3.3. Stream Usage
 
-QUIC's stream multiplexing capabilities are central to QSIP's design:
+QUIC's stream multiplexing capabilities are central to QSRP's design:
 
-*   **Signaling and Control Messages**: QSIP messages (e.g., INVITE, MESSAGE, PRESENCE) **MUST** be sent over reliable, ordered, bidirectional QUIC streams. A client typically opens one primary bidirectional stream to the server for most of its signaling traffic after connection establishment. Additional streams **MAY** be used for concurrent operations or by the server to send messages to the client.
+*   **Signaling and Control Messages**: QSRP messages (e.g., INVITE, MESSAGE, PRESENCE) **MUST** be sent over reliable, ordered, bidirectional QUIC streams. A client typically opens one primary bidirectional stream to the server for most of its signaling traffic after connection establishment. Additional streams **MAY** be used for concurrent operations or by the server to send messages to the client.
 *   **Media Transport**: Real-time media packets (e.g., audio, video) **SHOULD** be transported using QUIC Datagrams [RFC9221] when available and negotiated. This provides low-latency, unordered delivery suitable for media. Each distinct media flow (e.g., one audio track, one video track) **MAY** use its own logical identifier within the datagrams or be multiplexed if higher-layer framing (like RTP) supports it.
-*   **File Transfers**: Large file transfers initiated via a `MESSAGE` type with `message_type: "file"` **MAY** be broken down and sent over dedicated reliable QUIC streams for robust delivery, or use an external transfer mechanism referenced by a URL in the message. The specific method for file data transport is outside the strict scope of QSIP signaling but can be orchestrated by it.
+*   **File Transfers**: Large file transfers initiated via a `MESSAGE` type with `message_type: "file"` **MAY** be broken down and sent over dedicated reliable QUIC streams for robust delivery, or use an external transfer mechanism referenced by a URL in the message. The specific method for file data transport is outside the strict scope of QSRP signaling but can be orchestrated by it.
 
 The use of a single QUIC connection for both reliable signaling and unreliable media datagrams simplifies NAT traversal and reduces connection overhead.
 
 ## 4. Message Envelope
 
-All QSIP messages **MUST** adhere to a common JSON envelope structure. JSON is chosen for its human readability and widespread support in development environments.
+All QSRP messages **MUST** adhere to a common JSON envelope structure. JSON is chosen for its human readability and widespread support in development environments.
 
 ### 4.1. General Format
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "UUIDv4",
   "timestamp": "ISO8601-UTC",
   "from": {
@@ -345,7 +345,7 @@ All QSIP messages **MUST** adhere to a common JSON envelope structure. JSON is c
 
 ### 4.2. Envelope Fields
 
-* **`qsip_version`** (string, REQUIRED): The version of the QSIP protocol. This document defines "1.0". Clients and servers MUST include this field.
+* **`QSRP_version`** (string, REQUIRED): The version of the QSRP protocol. This document defines "1.0". Clients and servers MUST include this field.
 * **`message_id`** (string, REQUIRED): A unique identifier for this message, typically a UUIDv4. Used for tracking, ACKs, and de-duplication.
 * **`timestamp`** (string, REQUIRED): An ISO 8601 formatted UTC timestamp indicating when the message was generated by the sender (e.g., "2025-06-01T00:43:25Z").
 * **`from`** (object, REQUIRED): Identifies the originator of the message.
@@ -357,7 +357,7 @@ All QSIP messages **MUST** adhere to a common JSON envelope structure. JSON is c
   * **`group_id`** (string | null, OPTIONAL): The unique identifier of a target group or chat room.
   * **`call_center_id`** (string | null, OPTIONAL): The unique identifier of a target call center queue or service.
   * **`server_id`** (string | null, OPTIONAL): The unique identifier of the target server, if applicable (e.g., in multi-server federated environments or for messages explicitly to the server itself).
-* **`type`** (string, REQUIRED): The QSIP message type (e.g., "INVITE", "MESSAGE"). See Section 5 for defined types. This field is case-sensitive and MUST be one of the registered types.
+* **`type`** (string, REQUIRED): The QSRP message type (e.g., "INVITE", "MESSAGE"). See Section 5 for defined types. This field is case-sensitive and MUST be one of the registered types.
 * **`session_id`** (string | null, OPTIONAL): A unique identifier for a specific communication session (e.g., a call, a conference). This field MUST be present for messages related to an ongoing session (e.g., `INVITE`, `ACCEPT`, `REJECT`, `END`, `SESSION`, `CHANNEL_UPDATE`, `KEY_EXCHANGE`, `MEDIA_UPDATE`). For other messages, it MAY be null or omitted.
 * **`payload`** (object, REQUIRED): An object containing data specific to the message type. The structure of the payload varies per message type. If a message type has no specific data, the payload MUST be an empty object `{}`.
 
@@ -365,11 +365,11 @@ Endpoints MUST ignore any unrecognized top-level keys in the JSON envelope to al
 
 ### 4.3. Size Limits
 
-Individual QSIP messages sent over reliable QUIC streams SHOULD NOT exceed 64 KiB (65536 bytes) when serialized as UTF-8 JSON. Messages exceeding this limit MAY be rejected by the recipient with an `ERROR` message (see Section 9). This limit helps prevent excessive buffer allocation and stream blocking. Larger data, such as files, SHOULD be transferred using mechanisms suitable for large binary objects (e.g., dedicated QUIC streams or out-of-band HTTP transfers referenced by a URL).
+Individual QSRP messages sent over reliable QUIC streams SHOULD NOT exceed 64 KiB (65536 bytes) when serialized as UTF-8 JSON. Messages exceeding this limit MAY be rejected by the recipient with an `ERROR` message (see Section 9). This limit helps prevent excessive buffer allocation and stream blocking. Larger data, such as files, SHOULD be transferred using mechanisms suitable for large binary objects (e.g., dedicated QUIC streams or out-of-band HTTP transfers referenced by a URL).
 
 ## 5. Message Types
 
-This section defines the standard QSIP message types and their payloads.
+This section defines the standard QSRP message types and their payloads.
 
 ### 5.1. REGISTER
 
@@ -379,17 +379,17 @@ This section defines the standard QSIP message types and their payloads.
 
 **Payload Schema**:
 
-* **`auth_token`** (string, REQUIRED): An authentication token (e.g., JWT, API key) used to verify the client's identity. The specifics of token acquisition are outside QSIP but often involve an external identity provider or OAuth flow.
+* **`auth_token`** (string, REQUIRED): An authentication token (e.g., JWT, API key) used to verify the client's identity. The specifics of token acquisition are outside QSRP but often involve an external identity provider or OAuth flow.
 * **`device_info`** (object, REQUIRED): Information about the client device.
   * **`os`** (string, OPTIONAL): Operating system (e.g., "Android", "iOS", "Windows", "macOS", "Linux").
-  * **`app`** (string, OPTIONAL): Application name and version (e.g., "qsip-mobile 3.0", "qsip-desktop 1.2.0").
+  * **`app`** (string, OPTIONAL): Application name and version (e.g., "QSRP-mobile 3.0", "QSRP-desktop 1.2.0").
   * **`device_model`** (string, OPTIONAL): Specific device model (e.g., "Pixel 8", "iPhone 15 Pro").
 * **`capabilities`** (array of strings, OPTIONAL): A list of features or codecs supported by the client (e.g., ["av1", "opus", "sframe", "simulcast", "h264_baseline"]). This helps the server and peers understand what the client can handle.
 * **`supports_datagrams`** (boolean, OPTIONAL): Indicates if the client supports QUIC datagrams for media. Defaults to false if not present.
 
 **Normative Requirements**:
 
-* A client MUST send a `REGISTER` message to the server before attempting to send most other QSIP messages.
+* A client MUST send a `REGISTER` message to the server before attempting to send most other QSRP messages.
 * The server MUST validate the `auth_token`.
 * Upon successful registration, the server SHOULD reply with a `RECEIPT` message with `status: "registered"` or a more specific positive acknowledgment.
 * If registration fails, the server MUST reply with an `ERROR` message.
@@ -398,7 +398,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "7be01437-0cfe-443c-b49d-fae161750009",
   "timestamp": "2025-06-01T00:43:25Z",
   "from": {
@@ -411,7 +411,7 @@ This section defines the standard QSIP message types and their payloads.
     "auth_token": "jwt-access-token-for-alice",
     "device_info": {
       "os": "Android",
-      "app": "qsip-mobile 3.0",
+      "app": "QSRP-mobile 3.0",
       "device_model": "Pixel 8"
     },
     "capabilities": [
@@ -458,7 +458,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1a2b3c4d-5e6f-7g8h-9i0j-klmnopqrstuv",
   "timestamp": "2025-06-01T00:45:10Z",
   "from": {
@@ -487,7 +487,7 @@ This section defines the standard QSIP message types and their payloads.
 * **`codecs`** (object, OPTIONAL): Details the codecs offered by the initiator for each media type.
   * **`audio`** (array of strings, OPTIONAL): e.g., `["opus/48000/2"]` (Opus, 48kHz, stereo).
   * **`video`** (array of strings, OPTIONAL): e.g., `["av1/90000", "h264_constrained_baseline/90000"]`. Clock rates (e.g., 90000 for video) SHOULD be included.
-* **`sdp_offer`** (string, OPTIONAL): A Session Description Protocol (SDP) offer, typically Base64 encoded or in a minified JSON format if a QSIP-specific SDP-lite is used. This is for compatibility with WebRTC peers or more complex media negotiation.
+* **`sdp_offer`** (string, OPTIONAL): A Session Description Protocol (SDP) offer, typically Base64 encoded or in a minified JSON format if a QSRP-specific SDP-lite is used. This is for compatibility with WebRTC peers or more complex media negotiation.
 * **`ice_candidates`** (array of objects, OPTIONAL): A list of ICE candidates for NAT traversal. Each object might contain:
   * **`candidate`** (string): The SDP a=candidate line value.
   * **`sdpMid`** (string): Media stream identifier.
@@ -506,7 +506,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "fdee98d1-fcbf-4def-b7d6-ebbd2d6718b0",
   "timestamp": "2025-06-01T00:50:00Z",
   "from": {
@@ -572,7 +572,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
   "timestamp": "2025-06-01T00:50:05Z",
   "from": {
@@ -630,7 +630,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7",
   "timestamp": "2025-06-01T00:50:03Z",
   "from": {
@@ -673,7 +673,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "c3d4e5f6-g7h8-i9j0-k1l2-m3n4o5p6q7r8",
   "timestamp": "2025-06-01T01:15:30Z",
   "from": {
@@ -723,7 +723,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "d4e5f6g7-h8i9-j0k1-l2m3-n4o5p6q7r8s9",
   "timestamp": "2025-06-01T01:05:00Z",
   "from": {
@@ -746,7 +746,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "e5f6g7h8-i9j0-k1l2-m3n4-o5p6q7r8s9t0",
   "timestamp": "2025-06-01T01:08:00Z",
   "from": {
@@ -789,7 +789,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "f6g7h8i9-j0k1-l2m3-n4o5-p6q7r8s9t0u1",
   "timestamp": "2025-06-01T01:10:00Z",
   "from": {
@@ -837,7 +837,7 @@ This section defines the standard QSIP message types and their payloads.
     * **`file_name`** (string, REQUIRED): Original name of the file.
     * **`file_size`** (number, REQUIRED): Size of the file in bytes.
     * **`mime_type`** (string, REQUIRED): MIME type of the file (e.g., "application/pdf", "image/jpeg").
-    * **`url`** (string, REQUIRED): A URL from which the file can be downloaded. QSIP itself does not transport the file data in this message.
+    * **`url`** (string, REQUIRED): A URL from which the file can be downloaded. QSRP itself does not transport the file data in this message.
     * **`file_hash`** (string, OPTIONAL): A hash of the file (e.g., "sha256:abc...").
     * **`thumbnail_url`** (string, OPTIONAL): For images/videos, a URL to a thumbnail.
     * **`duration_ms`** (number, OPTIONAL): For audio/video clips, duration in milliseconds.
@@ -884,7 +884,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "0e8e1c9f-73e2-4b2b-9c8b-7d4a9f0c1a2b",
   "timestamp": "2025-06-01T01:20:00Z",
   "from": {
@@ -897,7 +897,7 @@ This section defines the standard QSIP message types and their payloads.
   "type": "MESSAGE",
   "payload": {
     "message_type": "text",
-    "content": "Hello QSIP! This is a **bold** move for _RTC_.\nCheck out `code`.",
+    "content": "Hello QSRP! This is a **bold** move for _RTC_.\nCheck out `code`.",
     "ephemeral_ttl": 86400,
     "priority": "normal",
     "attachments": []
@@ -909,7 +909,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1f9e2d0a-84f3-5c3c-ad9c-8e5b0a1d2c3d",
   "timestamp": "2025-06-01T01:21:00Z",
   "from": {
@@ -941,7 +941,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "2a9f3d1b-95e4-4c3c-bd8c-9e6b1a2d3c4d",
   "timestamp": "2025-06-01T01:22:00Z",
   "from": {
@@ -982,7 +982,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "3b0a4e2c-06c5-5d4d-ce9e-1b8d3c5f6a7f",
   "timestamp": "2025-06-01T01:23:00Z",
   "from": {
@@ -1036,7 +1036,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "2a0f3e1b-95a4-6d4d-be0d-9f6c1b2e3f4e",
   "timestamp": "2025-06-01T01:22:00Z",
   "from": {
@@ -1048,7 +1048,7 @@ This section defines the standard QSIP message types and their payloads.
   },
   "type": "REACTION",
   "payload": {
-    "target_message_id": "0e8e1c9f-73e2-4b2b-9c8b-7d4a9f0c1a2b", // ID of "Hello QSIP!" message
+    "target_message_id": "0e8e1c9f-73e2-4b2b-9c8b-7d4a9f0c1a2b", // ID of "Hello QSRP!" message
     "reaction": "👍",
     "action": "add"
   }
@@ -1078,7 +1078,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "3b1a4f2c-06b5-7e5e-cf1e-0a7d2c3f4a5f",
   "timestamp": "2025-06-01T01:23:00Z",
   "from": {
@@ -1115,7 +1115,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "4c2b5a3d-17c6-8f6f-df2f-1b8e3d4a5b6a",
   "timestamp": "2025-06-01T01:25:00Z",
   "from": {
@@ -1129,7 +1129,7 @@ This section defines the standard QSIP message types and their payloads.
   "payload": {
     "action": "edit",
     "target_message_id": "0e8e1c9f-73e2-4b2b-9c8b-7d4a9f0c1a2b",
-    "new_content": "Hello QSIP! This is an *updated* and **bold** move for _RTC_."
+    "new_content": "Hello QSRP! This is an *updated* and **bold** move for _RTC_."
   }
 }
 ```
@@ -1152,7 +1152,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "5d3c6b4e-28d7-9a7a-ea3a-2c9f4e5b6c7b",
   "timestamp": "2025-06-01T01:26:00Z",
   "from": {
@@ -1203,7 +1203,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "6e4d7c5f-39e8-0b8b-fb4b-3da05f6c7d8c",
   "timestamp": "2025-06-01T01:30:00Z",
   "from": {
@@ -1216,7 +1216,7 @@ This section defines the standard QSIP message types and their payloads.
     "action": "create",
     "group_id": "g-new-dev-team-alpha", // Client can suggest, server may override/confirm
     "name": "Dev Team Alpha",
-    "topic": "Discussing next-gen QSIP features",
+    "topic": "Discussing next-gen QSRP features",
     "members": [
       "u-alice",
       "u-bob"
@@ -1252,7 +1252,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "7f5e8d6a-4af9-1c9c-ac5c-4eb16a7d8e9d",
   "timestamp": "2025-06-01T01:35:00Z",
   "from": {
@@ -1266,7 +1266,7 @@ This section defines the standard QSIP message types and their payloads.
   "payload": {
     "action": "create",
     "poll_id": "p-logo-choice-001",
-    "question": "Which logo concept do you prefer for QSIP v2?",
+    "question": "Which logo concept do you prefer for QSRP v2?",
     "options": [
       "Concept A (Blue Rocket)",
       "Concept B (Green Globe)",
@@ -1307,7 +1307,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "8a6f9e7b-5ba0-2daD-bd6d-5fc27b8e9f0e",
   "timestamp": "2025-06-01T01:40:00Z",
   "from": {
@@ -1325,7 +1325,7 @@ This section defines the standard QSIP message types and their payloads.
     "priority": "high",
     "details": {
       "problem_summary": "Cannot connect to VPN",
-      "product_version": "QSIP Client 2.5"
+      "product_version": "QSRP Client 2.5"
     },
     "required_skills": ["vpn", "network", "tier2"]
   }
@@ -1334,7 +1334,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ### 5.17. CALENDAR
 
-**Purpose**: Manages calendar events (meetings, appointments) related to QSIP users or groups.
+**Purpose**: Manages calendar events (meetings, appointments) related to QSRP users or groups.
 
 **`session_id`**: null or omitted.
 
@@ -1357,7 +1357,7 @@ This section defines the standard QSIP message types and their payloads.
   * **`user_id`** (string, REQUIRED)
   * **`role`** (string, OPTIONAL, e.g., "organizer", "attendee", "optional_attendee")
   * **`response_status`** (string, OPTIONAL, e.g., "accepted", "declined", "tentative", "needs_action")
-  * **`location`** (string, OPTIONAL): Physical location or QSIP meeting link.
+  * **`location`** (string, OPTIONAL): Physical location or QSRP meeting link.
   * **`recurrence_rule`** (string, OPTIONAL): iCalendar RRULE string for recurring events.
   * **`response`** (string, OPTIONAL): For respond_to_invite, the user's response (e.g., "accept", "decline", "tentative").
   * **`query_start_time`** (string, OPTIONAL): For list_events.
@@ -1367,7 +1367,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "9b7a0f8c-6cb1-3ebE-ce7e-6ad38c9fa01f",
   "timestamp": "2025-06-01T01:45:00Z",
   "from": {
@@ -1378,9 +1378,9 @@ This section defines the standard QSIP message types and their payloads.
   "type": "CALENDAR",
   "payload": {
     "action": "create_event",
-    "event_id": "evt-weekly-qsip-sync-001",
-    "title": "Weekly QSIP Sync Meeting",
-    "description": "Discuss progress on QSIP development and upcoming features.",
+    "event_id": "evt-weekly-QSRP-sync-001",
+    "title": "Weekly QSRP Sync Meeting",
+    "description": "Discuss progress on QSRP development and upcoming features.",
     "start_time": "2025-06-07T15:00:00Z",
     "duration_minutes": 60,
     "participants": [
@@ -1388,14 +1388,14 @@ This section defines the standard QSIP message types and their payloads.
       { "user_id": "u-bob", "role": "attendee", "response_status": "needs_action" },
       { "user_id": "u-charlie", "role": "attendee", "response_status": "needs_action" }
     ],
-    "location": "QSIP Group: g-new-dev-team-alpha (auto-join link)"
+    "location": "QSRP Group: g-new-dev-team-alpha (auto-join link)"
   }
 }
 ```
 
 ### 5.18. SCHEDULE
 
-**Purpose**: Schedules a QSIP message (typically a MESSAGE type) to be sent or processed at a future time. This is more for server-side scheduling than the schedule_time hint in a MESSAGE.
+**Purpose**: Schedules a QSRP message (typically a MESSAGE type) to be sent or processed at a future time. This is more for server-side scheduling than the schedule_time hint in a MESSAGE.
 
 **`session_id`**: null or omitted.
 
@@ -1407,7 +1407,7 @@ This section defines the standard QSIP message types and their payloads.
   * `"delete_schedule"`
   * `"get_schedule"`
 * **`schedule_id`** (string, OPTIONAL/REQUIRED): Unique ID for the scheduled task.
-* **`scheduled_message`** (object, REQUIRED for create): The full QSIP message object to be sent/processed. This message MUST NOT itself be a SCHEDULE message.
+* **`scheduled_message`** (object, REQUIRED for create): The full QSRP message object to be sent/processed. This message MUST NOT itself be a SCHEDULE message.
 * **`schedule_time`** (string, REQUIRED for create): ISO 8601 timestamp for when the message should be processed.
 * **`recurrence_rule`** (string, OPTIONAL): iCalendar RRULE for recurring scheduled messages.
 
@@ -1415,7 +1415,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "ac8b1a9d-7dc2-4fcF-df8f-7be49da0b12a",
   "timestamp": "2025-06-01T01:50:00Z",
   "from": {
@@ -1429,7 +1429,7 @@ This section defines the standard QSIP message types and their payloads.
     "schedule_id": "sched-report-reminder-001",
     "schedule_time": "2025-06-03T17:00:00Z",
     "scheduled_message": {
-      "qsip_version": "1.0",
+      "QSRP_version": "1.0",
       "message_id": "msg-to-be-scheduled-uuid", // Server will generate a new one on delivery
       "timestamp": "2025-06-03T17:00:00Z", // Will be updated on delivery
       "from": { // Server may act as sender or use original user_id
@@ -1467,7 +1467,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "bd9c2baE-8ed3-5ad0-ea90-8cf50eb1c23b",
   "timestamp": "2025-06-01T01:55:00Z",
   "from": {
@@ -1520,7 +1520,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "ce0d3cbF-9fe4-6be1-fb01-9da61fc2d34c",
   "timestamp": "2025-06-01T02:00:00Z",
   "from": { // Moderator/Admin
@@ -1562,12 +1562,12 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "df1e4dc0-a0f5-7cf2-ac12-aea72ad3e45d",
   "timestamp": "2025-06-01T02:05:00Z",
   "from": { // Usually server internal, or specific service
     "user_id": "u-system-audit",
-    "device_id": "d-qsip-server-main"
+    "device_id": "d-QSRP-server-main"
   },
   "to": {}, // To audit log system
   "type": "AUDIT_EVENT",
@@ -1576,7 +1576,7 @@ This section defines the standard QSIP message types and their payloads.
     "actor_user_id": "u-alice",
     "actor_device_id": "d-alice-mobile",
     "ip_address": "198.51.100.23",
-    "user_agent": "qsip-mobile/3.0 (Android 13; Pixel 8)",
+    "user_agent": "QSRP-mobile/3.0 (Android 13; Pixel 8)",
     "details": {
       "auth_method": "jwt_refresh_token"
     },
@@ -1587,7 +1587,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ### 5.22. ERROR
 
-**Purpose**: Sent by an endpoint (client or server) to indicate that an error occurred while processing a request or that a QSIP-level error condition was met.
+**Purpose**: Sent by an endpoint (client or server) to indicate that an error occurred while processing a request or that a QSRP-level error condition was met.
 
 **`session_id`**: MAY be present if the error relates to a specific session.
 
@@ -1600,17 +1600,17 @@ This section defines the standard QSIP message types and their payloads.
 
 **Normative Requirements**:
 
-* Endpoints MUST use this message type to report QSIP protocol errors.
+* Endpoints MUST use this message type to report QSRP protocol errors.
 
 **Example**:
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "e02f5ed1-b1a6-8df3-bd23-bfa83be4f56e",
   "timestamp": "2025-06-01T00:50:02Z",
   "from": { // The endpoint that detected the error
-    "user_id": "u-qsip-server-main",
+    "user_id": "u-QSRP-server-main",
     "device_id": "d-server-instance-1"
   },
   "to": { // The originator of the problematic message
@@ -1654,7 +1654,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "f13a6fe2-c2b7-9ef4-ce34-cb094cf5a67f",
   "timestamp": "2025-06-01T00:50:06Z",
   "from": {
@@ -1704,7 +1704,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "024b7af3-d3c8-0fa5-df45-dc1a5da6b78a",
   "timestamp": "2025-06-01T01:12:00Z",
   "from": {
@@ -1756,7 +1756,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "135c8ba4-e4d9-1ab6-ea56-ed2b6eb7c89b",
   "timestamp": "2025-06-01T09:00:00Z",
   "from": {
@@ -1796,7 +1796,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "146d9e8f-0a1b-2c3d-4e5f-6g7h8i9j0k1l",
   "timestamp": "2025-06-01T01:55:00Z",
   "from": {
@@ -1832,7 +1832,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "157e0f9g-1b2c-3d4e-5f6g-7h8i9j0k1l2m",
   "timestamp": "2025-06-01T02:00:00Z",
   "from": {
@@ -1872,7 +1872,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "168f1g0h-2c3d-4e5f-6g7h-8i9j0k1l2m3n",
   "timestamp": "2025-06-01T02:05:00Z",
   "from": {
@@ -1909,7 +1909,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "179g2h1i-3d4e-5f6g-7h8i-9j0k1l2m3n4o5p",
   "timestamp": "2025-06-01T02:10:00Z",
   "from": {
@@ -1951,7 +1951,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "180h3i2j-4e5f-6g7h-8i9j-0k1l2m3n4o5p6q",
   "timestamp": "2025-06-01T02:15:00Z",
   "from": {
@@ -1988,7 +1988,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "191i4j3k-5f6g-7h8i-9j0k-1l2m3n4o5p6q7r",
   "timestamp": "2025-06-01T02:20:00Z",
   "from": {
@@ -2027,7 +2027,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1a2b3c4d-5e6f-7g8h-9i0j-klmnopqrstuv",
   "timestamp": "2025-06-01T02:25:00Z",
   "from": {
@@ -2050,7 +2050,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ### 5.33. FEDERATION
 
-**Purpose**: Used for managing federation or cross-platform communication between different QSIP servers.
+**Purpose**: Used for managing federation or cross-platform communication between different QSRP servers.
 
 **`session_id`**: null or omitted.
 
@@ -2067,7 +2067,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1b2c3d4e-5f6g-7h8i-9j0k-1l2m3n4o5p6q7r8s",
   "timestamp": "2025-06-01T02:30:00Z",
   "from": {
@@ -2107,7 +2107,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1c2d3e4f-5g6h-7i8j-0k1l-2m3n4o5p6q7r8s9t",
   "timestamp": "2025-06-01T02:35:00Z",
   "from": {
@@ -2146,7 +2146,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1d2e3f4g-5h6i-7j8k-0l1m-2n3o4p5q6r7s8t9u",
   "timestamp": "2025-06-01T02:40:00Z",
   "from": {
@@ -2186,7 +2186,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1e2f3g4h-5i6j-7k8l-0m1n-2o3p4q5r6s7t8u9v",
   "timestamp": "2025-06-01T02:45:00Z",
   "from": {
@@ -2230,7 +2230,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1f2g3h4i-5j6k-7l8m-0n1o-2p3q4r5s6t7u8v",
   "timestamp": "2025-06-01T02:50:00Z",
   "from": {
@@ -2270,7 +2270,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1g2h3i4j-5k6l-7m8n-0o1p-2q3r4s5t6u7v8w",
   "timestamp": "2025-06-01T02:55:00Z",
   "from": {
@@ -2310,7 +2310,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1h2i3j4k-5l6m-7n8o-0p1q-2r3s4t5u6v7w8x",
   "timestamp": "2025-06-01T03:00:00Z",
   "from": {
@@ -2349,7 +2349,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1i2j3k4l-5m6n-7o8p-0q1r-2s3t4u5v6w7x8y",
   "timestamp": "2025-06-01T03:05:00Z",
   "from": {
@@ -2404,7 +2404,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "1j2k3l4m-5n6o-7p8q-0r1s-2t3u4v5w6x7y",
   "timestamp": "2025-06-01T03:10:00Z",
   "from": {
@@ -2435,7 +2435,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "2k3l4m5n-6o7p-8q9r-0s1t-2u3v4w5x6y7z",
   "timestamp": "2025-06-01T03:15:00Z",
   "from": {
@@ -2487,7 +2487,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "2m3n4o5p-6q7r-8s9t-0u1v-2w3x4y5z6a7b",
   "timestamp": "2025-06-01T03:20:00Z",
   "from": {
@@ -2536,7 +2536,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "3n4o5p6q-7r8s-9t0u-1v2w-3x4y5z6a7b",
   "timestamp": "2025-06-01T03:25:00Z",
   "from": {
@@ -2569,8 +2569,8 @@ This section defines the standard QSIP message types and their payloads.
 **Payload Schema**:
 
 * **`webhook_type`** (string, REQUIRED): Type of webhook.
-  * `"incoming"`: External service sending data to QSIP.
-  * `"outgoing"`: QSIP sending events to external service.
+  * `"incoming"`: External service sending data to QSRP.
+  * `"outgoing"`: QSRP sending events to external service.
   * `"configure"`: Configure webhook settings.
 * **`action`** (string, REQUIRED for configure): Configuration action.
   * `"create"`: Create new webhook.
@@ -2590,7 +2590,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "4o5p6q7r-8s9t-0u1v-2w3x4y5z6a7b8c",
   "timestamp": "2025-06-01T03:30:00Z",
   "from": {
@@ -2653,7 +2653,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "5p6q7r8s-9t0u-1v2w-3x4y-5z6a7b8c9d0e",
   "timestamp": "2025-06-01T03:35:00Z",
   "from": {
@@ -2733,7 +2733,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "6q7r8s9t-0u1v-2w3x-4y5z-6a7b8c9d0e1f",
   "timestamp": "2025-06-01T03:40:00Z",
   "from": {
@@ -2829,7 +2829,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ```json
 {
-  "qsip_version": "1.0",
+  "QSRP_version": "1.0",
   "message_id": "7r8s9t0u-1v2w-3x4y-5z6a-7b8c9d0e1f2g",
   "timestamp": "2025-06-01T03:45:00Z",
   "from": {
@@ -2868,7 +2868,7 @@ This section defines the standard QSIP message types and their payloads.
 
 ### 6.1. Session Lifecycle
 
-A QSIP session typically refers to a real-time communication exchange, like a call or conference, identified by a unique session_id. The lifecycle generally follows:
+A QSRP session typically refers to a real-time communication exchange, like a call or conference, identified by a unique session_id. The lifecycle generally follows:
 
 * **Initiation**: An endpoint sends an INVITE message with a new session_id.
 * **Negotiation**: The recipient(s) respond with ACCEPT (including their media parameters) or REJECT. ICE negotiation may occur via candidates in INVITE/ACCEPT or subsequent messages. Key exchange (KEY_EXCHANGE) for E2EE also happens during this phase.
@@ -2896,7 +2896,7 @@ Detailed state machines for sessions, calls, queues, and other stateful interact
 
 ## 7. Media Transport
 
-QSIP signaling orchestrates media sessions, but the media itself is transported separately, typically leveraging QUIC datagrams or other UDP-based mechanisms.
+QSRP signaling orchestrates media sessions, but the media itself is transported separately, typically leveraging QUIC datagrams or other UDP-based mechanisms.
 
 ### 7.1. Media Encapsulation
 
@@ -2920,7 +2920,7 @@ AV1 for video and Opus for audio are RECOMMENDED as default high-quality, royalt
 
 For end-to-end encrypted media, SFrame [draft-ietf-sframe] is RECOMMENDED.
 
-Cryptographic keys for SFrame MUST be exchanged using KEY_EXCHANGE messages over the secure QSIP signaling channel.
+Cryptographic keys for SFrame MUST be exchanged using KEY_EXCHANGE messages over the secure QSRP signaling channel.
 
 The sframe_params in the KEY_EXCHANGE payload carry the necessary keying material, key IDs, and potentially epoch information for key ratcheting.
 
@@ -2928,7 +2928,7 @@ Implementations MUST follow SFrame specifications for packet protection and key 
 
 ### 7.4. Simulcast and Scalable Video Coding (SVC)
 
-To support varying network conditions and receiver capabilities in group calls, QSIP implementations SHOULD support simulcast (sending multiple resolutions/bitrates of the same video source) and/or SVC (a single video stream with multiple scalable layers).
+To support varying network conditions and receiver capabilities in group calls, QSRP implementations SHOULD support simulcast (sending multiple resolutions/bitrates of the same video source) and/or SVC (a single video stream with multiple scalable layers).
 
 The capabilities field in REGISTER and codec descriptions in INVITE/ACCEPT MAY indicate support for simulcast or SVC.
 
@@ -2936,7 +2936,7 @@ Specific parameters for simulcast layers or SVC layers MAY be signaled via exten
 
 ### 7.5. NAT Traversal
 
-QSIP leverages QUIC's properties (single port, connection migration) which can simplify NAT traversal compared to multi-port TCP/UDP protocols.
+QSRP leverages QUIC's properties (single port, connection migration) which can simplify NAT traversal compared to multi-port TCP/UDP protocols.
 
 However, for P2P media, Interactive Connectivity Establishment (ICE) [RFC8445] is still RECOMMENDED.
 
@@ -2944,13 +2944,13 @@ ICE candidates SHOULD be exchanged in INVITE and ACCEPT messages, or via subsequ
 
 Support for STUN [RFC8489] and TURN [RFC8656] (both for signaling and media relays if QUIC proxying is used) is RECOMMENDED for robust connectivity. A relay=true flag or similar indication in ICE candidate JSON MAY signal a TURN candidate.
 
-The QSIP server can act as an ICE negotiation orchestrator or a TURN relay itself.
+The QSRP server can act as an ICE negotiation orchestrator or a TURN relay itself.
 
 ## 8. Authentication and Authorization
 
 ### 8.1. Device Registration
 
-Clients MUST register with a QSIP server using the REGISTER message (Section 5.1) after establishing a QUIC connection. This step is crucial for authenticating the user/device and establishing its presence.
+Clients MUST register with a QSRP server using the REGISTER message (Section 5.1) after establishing a QUIC connection. This step is crucial for authenticating the user/device and establishing its presence.
 
 ### 8.2. Token-based Authentication
 
@@ -2958,7 +2958,7 @@ The auth_token field in the REGISTER message payload is the primary means of aut
 
 JSON Web Tokens (JWT) [RFC7519] are RECOMMENDED for auth_token due to their widespread support and ability to carry claims.
 
-The method of obtaining the initial auth_token (e.g., OAuth 2.0 flow, login with credentials to an IdP) is outside the scope of QSIP but MUST be secure.
+The method of obtaining the initial auth_token (e.g., OAuth 2.0 flow, login with credentials to an IdP) is outside the scope of QSRP but MUST be secure.
 
 ### 8.3. Token Lifecycle
 
@@ -2966,7 +2966,7 @@ auth_tokens MUST have an expiration time. Clients SHOULD be prepared to refresh 
 
 Servers MAY provide a new token (e.g., in a RECEIPT to REGISTER or a dedicated AUTH_REFRESH_SUCCESS message) or expect clients to use a refresh token via an out-of-band mechanism.
 
-If a token expires or is invalid, the server MUST reject QSIP messages requiring authentication with an appropriate ERROR (e.g., code 4011 "Unauthorized" or 4012 "TokenExpired").
+If a token expires or is invalid, the server MUST reject QSRP messages requiring authentication with an appropriate ERROR (e.g., code 4011 "Unauthorized" or 4012 "TokenExpired").
 
 Servers MUST provide a mechanism for token revocation in case of compromised devices or user logout.
 
@@ -2974,7 +2974,7 @@ Servers MUST provide a mechanism for token revocation in case of compromised dev
 
 ### 9.1. ERROR Message Type
 
-QSIP uses a dedicated ERROR message (Section 5.22) to report issues. This message includes a numeric code, a reason phrase, and optional details.
+QSRP uses a dedicated ERROR message (Section 5.22) to report issues. This message includes a numeric code, a reason phrase, and optional details.
 
 ### 9.2. Error Codes
 
@@ -2986,7 +2986,7 @@ Error codes are grouped by range:
   * **4000-4009**: General Client Errors
     * **4001**: MalformedPayload (e.g., invalid JSON, missing required field)
     * **4002**: InvalidMessageType
-    * **4003**: UnsupportedQsipVersion
+    * **4003**: UnsupportedQSRPVersion
     * **4004**: MessageTooLarge
   * **4010-4019**: Authentication/Authorization Errors
     * **4011**: Unauthorized (general authentication failure)
@@ -3032,7 +3032,7 @@ This list is not exhaustive. See IANA Considerations (Section 14.2) for registra
 
 ### 10.1. Custom Message Types
 
-While this specification defines a core set of message types, QSIP is designed to be extensible. New message types MAY be defined. Organizations defining custom types SHOULD prefix them with a reverse domain name string (e.g., "com.example.custom_type") to avoid collisions, unless registered via an IANA process.
+While this specification defines a core set of message types, QSRP is designed to be extensible. New message types MAY be defined. Organizations defining custom types SHOULD prefix them with a reverse domain name string (e.g., "com.example.custom_type") to avoid collisions, unless registered via an IANA process.
 
 ### 10.2. Payload Extensions
 
@@ -3042,7 +3042,7 @@ Custom fields MAY be added to the payload of standard or custom message types. C
 
 ### 11.1. Latency
 
-QSIP aims for low latency by:
+QSRP aims for low latency by:
 
 Using QUIC's 0-RTT or 1-RTT connection establishment.
 Multiplexing all communication over a single connection, avoiding head-of-line blocking between streams.
@@ -3050,31 +3050,31 @@ Using compact JSON payloads and QUIC datagrams for media.
 
 ### 11.2. Bandwidth Efficiency
 
-JSON payloads are relatively verbose compared to binary formats. Implementations MAY use compression (e.g., DEFLATE, Brotli) at the QUIC stream level if negotiated, or a more compact serialization like CBOR if universally adopted in a future QSIP version or profile. For now, JSON is mandated for interoperability.
+JSON payloads are relatively verbose compared to binary formats. Implementations MAY use compression (e.g., DEFLATE, Brotli) at the QUIC stream level if negotiated, or a more compact serialization like CBOR if universally adopted in a future QSRP version or profile. For now, JSON is mandated for interoperability.
 Efficient codecs (Opus, AV1) are recommended for media.
 QUIC header and transport mechanisms are more efficient than TCP/TLS/HTTP stacks.
 
 ### 11.3. Congestion Control
 
-QSIP relies on QUIC's built-in congestion control mechanisms (e.g., NewReno, CUBIC, BBR) to adapt to network conditions. Application-level rate limiting or prioritization (e.g., for critical signaling messages over large file transfer notifications) MAY be implemented by QSIP servers. DSCP marking recommendations MAY be provided in future revisions for QoS.
+QSRP relies on QUIC's built-in congestion control mechanisms (e.g., NewReno, CUBIC, BBR) to adapt to network conditions. Application-level rate limiting or prioritization (e.g., for critical signaling messages over large file transfer notifications) MAY be implemented by QSRP servers. DSCP marking recommendations MAY be provided in future revisions for QoS.
 
 ## 12. Security Considerations
 
-Security is a fundamental design principle of QSIP.
+Security is a fundamental design principle of QSRP.
 
-* **Transport Security**: All QSIP communication MUST be over QUIC, which mandates TLS 1.3 encryption. This protects against eavesdropping, tampering, and replay of signaling messages at the transport layer.
+* **Transport Security**: All QSRP communication MUST be over QUIC, which mandates TLS 1.3 encryption. This protects against eavesdropping, tampering, and replay of signaling messages at the transport layer.
 
 * **Authentication**: Strong authentication of users and devices is enforced via the REGISTER message and auth_token. Implementations MUST use secure methods for token generation, management, and validation.
 
-* **End-to-End Encryption (E2EE)**: For media, SFrame is RECOMMENDED for E2EE. KEY_EXCHANGE messages facilitate secure transfer of SFrame keys over the already encrypted QSIP channel. For messaging, a similar E2EE scheme (like Signal Protocol, OLM/Megolm) MAY be implemented by encrypting the content of MESSAGE payloads, with keys exchanged via KEY_EXCHANGE or a similar mechanism.
+* **End-to-End Encryption (E2EE)**: For media, SFrame is RECOMMENDED for E2EE. KEY_EXCHANGE messages facilitate secure transfer of SFrame keys over the already encrypted QSRP channel. For messaging, a similar E2EE scheme (like Signal Protocol, OLM/Megolm) MAY be implemented by encrypting the content of MESSAGE payloads, with keys exchanged via KEY_EXCHANGE or a similar mechanism.
 
 * **Authorization**: Servers MUST enforce authorization checks to ensure users can only perform actions and access data they are permitted to (e.g., joining private groups, moderating, accessing user profiles).
 
-* **Data Validation**: All incoming QSIP messages and payloads MUST be rigorously validated to prevent injection attacks, denial of service, or crashes due to malformed data. This includes checking data types, lengths, and allowed values.
+* **Data Validation**: All incoming QSRP messages and payloads MUST be rigorously validated to prevent injection attacks, denial of service, or crashes due to malformed data. This includes checking data types, lengths, and allowed values.
 
 * **Denial of Service (DoS) Mitigation**: Servers SHOULD implement rate limiting, connection limits, and potentially QUIC-level mitigations (e.g., address validation) to protect against DoS attacks.
 
-* **Replay Protection**: QUIC/TLS provides replay protection at the transport layer. For application-level idempotency where needed (e.g., financial transactions if QSIP were extended), message_id can be used.
+* **Replay Protection**: QUIC/TLS provides replay protection at the transport layer. For application-level idempotency where needed (e.g., financial transactions if QSRP were extended), message_id can be used.
 
 * **Privacy**: See Section 13.
 
@@ -3084,13 +3084,13 @@ Implementers SHOULD consult standard security best practices for RTC application
 
 ## 13. Privacy Considerations
 
-* **PII Minimization**: QSIP messages SHOULD only carry Personally Identifiable Information (PII) necessary for their function. For example, display_name in the from field is optional.
+* **PII Minimization**: QSRP messages SHOULD only carry Personally Identifiable Information (PII) necessary for their function. For example, display_name in the from field is optional.
 
 * **Data Encryption**: All data is encrypted in transit by QUIC/TLS. E2EE for media (SFrame) and messaging content provides additional privacy against server-side eavesdropping.
 
 * **Logging**: Servers and clients SHOULD be configurable regarding the level of logging. Logs containing PII or sensitive message content MUST be protected with appropriate access controls and SHOULD be anonymized or pseudonymized where possible. Log retention policies SHOULD be defined.
 
-* **User Consent**: Applications using QSIP MUST obtain user consent for collecting and processing PII, in accordance with applicable privacy regulations (e.g., GDPR, CCPA).
+* **User Consent**: Applications using QSRP MUST obtain user consent for collecting and processing PII, in accordance with applicable privacy regulations (e.g., GDPR, CCPA).
 
 * **Presence and Profile Visibility**: Users SHOULD have granular control over who can see their presence information and detailed profile data.
 
@@ -3100,11 +3100,11 @@ Implementers SHOULD consult standard security best practices for RTC application
 
 ## 14. IANA Considerations
 
-This document requests the creation of several IANA registries under a new "QUIC Signaling and Interaction Protocol (QSIP) Parameters" heading. The registration policy for new entries in these registries, unless otherwise specified, is "Specification Required" [RFC8126].
+This document requests the creation of several IANA registries under a new "QUIC Signaling and Interaction Protocol (QSRP) Parameters" heading. The registration policy for new entries in these registries, unless otherwise specified, is "Specification Required" [RFC8126].
 
-### 14.1. QSIP Message Type Registry
+### 14.1. QSRP Message Type Registry
 
-A new registry for QSIP Message Types is established. Each entry must include the Type Name (string) and a reference to its defining specification. Initial values are:
+A new registry for QSRP Message Types is established. Each entry must include the Type Name (string) and a reference to its defining specification. Initial values are:
 
 | Type Name | Reference |
 |-----------|-----------|
@@ -3156,11 +3156,11 @@ A new registry for QSIP Message Types is established. Each entry must include th
 | MODAL | This document |
 | CLIP | This document |
 
-### 14.2. QSIP Error Code Registry
+### 14.2. QSRP Error Code Registry
 
-A new registry for QSIP Error Codes is established. Each entry must include the Code (number), Reason Phrase (string), and a reference. Initial values are defined in Section 9.2 of this document.
+A new registry for QSRP Error Codes is established. Each entry must include the Code (number), Reason Phrase (string), and a reference. Initial values are defined in Section 9.2 of this document.
 
-### 14.3. QSIP Info Type Registry
+### 14.3. QSRP Info Type Registry
 
 A new registry for Info Types used within the INFO message's info_type payload field.
 
@@ -3168,37 +3168,37 @@ A new registry for Info Types used within the INFO message's info_type payload f
 |----------------|-----------|
 | typing_indicator | This document |
 
-### 14.4. QSIP Action Type Registries
+### 14.4. QSRP Action Type Registries
 
 Separate registries for action fields within specific message types (e.g., SESSION, MESSAGE_ACTION, GROUP, POLL, QUEUE, CALENDAR, SCHEDULE, MODERATION, USER_PROFILE) are established. Initial values are those defined in the payload descriptions in Section 5.
 
 ## 15. Backwards-Compatibility and Interoperability
 
-While QSIP is a new protocol, considerations for interworking with existing RTC ecosystems are important.
+While QSRP is a new protocol, considerations for interworking with existing RTC ecosystems are important.
 
-### 15.1. QSIP-to-SIP Gateway
+### 15.1. QSRP-to-SIP Gateway
 
-A gateway can be implemented to translate between QSIP and SIP [RFC3261] domains.
+A gateway can be implemented to translate between QSRP and SIP [RFC3261] domains.
 Signaling: INVITE/ACCEPT/REJECT/END can be mapped to SIP equivalents. session_id maps to Call-ID. from.user_id maps to SIP From URI.
-Media: Media would need to be transcoded or relayed if codecs/transports differ (e.g., QUIC Datagrams to SRTP over UDP). SDP from QSIP messages would be converted to standard SDP for SIP.
-Presence: QSIP PRESENCE could be mapped to SIP PUBLISH/SUBSCRIBE/NOTIFY for presence (SIMPLE).
-Challenges: Feature parity, especially for rich messaging and advanced QSIP types, will be difficult.
+Media: Media would need to be transcoded or relayed if codecs/transports differ (e.g., QUIC Datagrams to SRTP over UDP). SDP from QSRP messages would be converted to standard SDP for SIP.
+Presence: QSRP PRESENCE could be mapped to SIP PUBLISH/SUBSCRIBE/NOTIFY for presence (SIMPLE).
+Challenges: Feature parity, especially for rich messaging and advanced QSRP types, will be difficult.
 
-### 15.2. QSIP-to-XMPP Gateway
+### 15.2. QSRP-to-XMPP Gateway
 
-A gateway can map QSIP messaging and presence to XMPP [RFC6120], [RFC6121].
-Messaging: QSIP MESSAGE can be mapped to XMPP <message> stanzas. Rich content and file URLs would need careful translation.
-Presence: QSIP PRESENCE maps to XMPP <presence> stanzas.
-Groups: QSIP GROUP actions map to XMPP Multi-User Chat (MUC) [XEP-0045] operations.
-Calls: QSIP call signaling would need to be mapped to Jingle [XEP-0166] if audio/video interop is desired.
+A gateway can map QSRP messaging and presence to XMPP [RFC6120], [RFC6121].
+Messaging: QSRP MESSAGE can be mapped to XMPP <message> stanzas. Rich content and file URLs would need careful translation.
+Presence: QSRP PRESENCE maps to XMPP <presence> stanzas.
+Groups: QSRP GROUP actions map to XMPP Multi-User Chat (MUC) [XEP-0045] operations.
+Calls: QSRP call signaling would need to be mapped to Jingle [XEP-0166] if audio/video interop is desired.
 
 ### 15.3. RTP Fallback Considerations
 
-If a QSIP endpoint needs to interoperate with a legacy system that only supports RTP over UDP (not QUIC Datagrams), a media gateway (co-located with the QSIP/SIP or QSIP/XMPP gateway) would be required to transcode the media transport. The QSIP client itself would communicate using QSIP/QUIC to the gateway.
+If a QSRP endpoint needs to interoperate with a legacy system that only supports RTP over UDP (not QUIC Datagrams), a media gateway (co-located with the QSRP/SIP or QSRP/XMPP gateway) would be required to transcode the media transport. The QSRP client itself would communicate using QSRP/QUIC to the gateway.
 
 ## 16. Multi-Device Synchronization
 
-QSIP supports multi-device usage where a user can be simultaneously connected from multiple devices with the same user_id but different device_ids. This section describes how state and messages are synchronized across devices.
+QSRP supports multi-device usage where a user can be simultaneously connected from multiple devices with the same user_id but different device_ids. This section describes how state and messages are synchronized across devices.
 
 ### 16.1. Device Management
 
@@ -3233,14 +3233,14 @@ The SYNC message type facilitates explicit synchronization requests and response
 
 ## 17. Federation
 
-QSIP supports federation between different QSIP servers, allowing users on different servers to communicate seamlessly. Federation uses the FEDERATION message type and follows specific procedures for cross-server communication.
+QSRP supports federation between different QSRP servers, allowing users on different servers to communicate seamlessly. Federation uses the FEDERATION message type and follows specific procedures for cross-server communication.
 
 ### 17.1. Server Discovery
 
 When a user attempts to communicate with a user on a different server (identified by a user_id containing a domain component, e.g., "alice@server1.example.com"), the originating server MUST:
 
 * Extract the domain from the user_id
-* Perform DNS lookups for QSIP service records (SRV records for _qsip._udp)
+* Perform DNS lookups for QSRP service records (SRV records for _QSRP._udp)
 * Establish a server-to-server QUIC connection if not already established
 * Authenticate the remote server using TLS certificates
 
@@ -3251,7 +3251,7 @@ Server-to-server connections MUST use mutual TLS authentication with the followi
 * Each server MUST present a valid TLS certificate for its domain
 * Certificates MUST be validated against trusted certificate authorities
 * Servers MAY implement additional authentication mechanisms using the FEDERATION message type
-* Once authenticated, servers exchange capability information including supported QSIP versions and features
+* Once authenticated, servers exchange capability information including supported QSRP versions and features
 
 ### 17.3. Message Routing
 
@@ -3263,15 +3263,15 @@ When routing messages between federated servers:
 * Error messages MUST be routed back to the originating server
 * Presence information MAY be shared between servers based on privacy settings and server policies
 
-Federation enables building decentralized QSIP networks while maintaining the protocol's security and feature guarantees.
+Federation enables building decentralized QSRP networks while maintaining the protocol's security and feature guarantees.
 
 ## 18. App Development
 
-QSIP supports a rich ecosystem of third-party applications and bots that can extend the platform's functionality. This section describes how developers can create, distribute, and manage QSIP applications.
+QSRP supports a rich ecosystem of third-party applications and bots that can extend the platform's functionality. This section describes how developers can create, distribute, and manage QSRP applications.
 
 ### 18.1. App Registration
 
-Applications MUST be registered with a QSIP server or app directory before they can be used. Registration involves:
+Applications MUST be registered with a QSRP server or app directory before they can be used. Registration involves:
 
 * **App Manifest**: A JSON document describing the app's capabilities, required permissions, commands, and interactive components.
 * **OAuth Configuration**: Apps use OAuth 2.0 for installation and authorization.
@@ -3282,7 +3282,7 @@ Apps are identified by a unique `app_id` and authenticate using app-specific tok
 
 ### 18.2. Permissions and Scopes
 
-QSIP uses a granular permission system for apps:
+QSRP uses a granular permission system for apps:
 
 **Common Scopes**:
 * `messages:read` - Read messages in channels where installed
@@ -3302,14 +3302,14 @@ Apps can be distributed through:
 
 * **Private Installation**: Direct installation via OAuth flow
 * **Workspace App Directory**: Apps approved by workspace admins
-* **Public App Directory**: Vetted apps available to all QSIP users
+* **Public App Directory**: Vetted apps available to all QSRP users
 * **Enterprise Distribution**: Internal apps for specific organizations
 
 The distribution method determines the review process and available features. Public apps undergo security review and MUST follow additional guidelines for data handling and user privacy.
 
 ## 19. JSON Schemas
 
-Formal JSON Schema definitions for the QSIP message envelope and the payload of each message type defined in this document SHOULD be provided in a companion document or an appendix to ensure clarity for implementers and to enable automated validation. (Placeholder: Full JSON Schemas will be detailed in Appendix C or a separate linked document.)
+Formal JSON Schema definitions for the QSRP message envelope and the payload of each message type defined in this document SHOULD be provided in a companion document or an appendix to ensure clarity for implementers and to enable automated validation. (Placeholder: Full JSON Schemas will be detailed in Appendix C or a separate linked document.)
 
 ## 20. References
 
@@ -3388,7 +3388,7 @@ Formal JSON Schema definitions for the QSIP message envelope and the payload of 
 
 ## Appendix B: Detailed State Machines
 
-(Placeholder: This section would contain formal state machine diagrams (e.g., UML or PlantUML source) for key QSIP entities like Sessions, Presence, Group Membership, and Queue Items. For brevity in this combined document, detailed diagrams are omitted but would be essential for a full IETF draft.)
+(Placeholder: This section would contain formal state machine diagrams (e.g., UML or PlantUML source) for key QSRP entities like Sessions, Presence, Group Membership, and Queue Items. For brevity in this combined document, detailed diagrams are omitted but would be essential for a full IETF draft.)
 
 Key stateful entities include:
 
@@ -3399,9 +3399,9 @@ Key stateful entities include:
 
 ## Appendix C: Comparative Analysis
 
-This table summarizes how the finalized QSIP specification addresses common RTC needs compared to existing WebRTC setups and commercial telecom APIs like Twilio, assuming QSIP is fully implemented as specified.
+This table summarizes how the finalized QSRP specification addresses common RTC needs compared to existing WebRTC setups and commercial telecom APIs like Twilio, assuming QSRP is fully implemented as specified.
 
-| Capability | WebRTC (Baseline) | Twilio (Typical Commercial API) | QSIP (as specified) |
+| Capability | WebRTC (Baseline) | Twilio (Typical Commercial API) | QSRP (as specified) |
 |------------|-------------------|----------------------------------|---------------------|
 | Signaling Protocol | Undefined (App-specific: SIP, XMPP, custom WebSocket) | Proprietary REST/WebSocket APIs, SIP | Unified JSON over QUIC |
 | Transport | UDP for media (RTP), TCP/WebSocket for signaling | UDP/TCP (various internal) | Single QUIC connection (UDP) for signaling & media datagrams |
@@ -3417,12 +3417,12 @@ This table summarizes how the finalized QSIP specification addresses common RTC 
 | Simulcast/SVC | Supported in implementations | Supported | Supported explicitly (signaled via capabilities/media negotiation) |
 | Extensibility | High (via application logic) | Via APIs and webhooks | High (Custom message types, payload extensions, IANA registries) |
 | Browser Native Support | Yes (for WebRTC media/data channels) | Yes (SDKs abstract underlying tech) | Requires QUIC-enabled environment (native apps, servers, modern browsers with QUIC API, or WebAssembly polyfill for some aspects) |
-| PSTN Integration | Via external gateways | Core feature | Via Gateways (QSIP-to-SIP, as specified in Sec 15) |
+| PSTN Integration | Via external gateways | Core feature | Via Gateways (QSRP-to-SIP, as specified in Sec 15) |
 | Global Media Relay | App/Service dependent | Core feature | Infrastructure dependent; protocol supports TURN for relaying. |
 | Developer Simplicity | Moderate-High (signaling complexity) | Good (SDKs, but API surface can be large) | Aimed for High (Unified protocol, JSON, clear message types) |
 | Standardization | Core media is IETF/W3C | Proprietary API | Proposed Open Standard (IETF-style draft) |
 
-**QSIP Advantages Highlighted by the Specification:**
+**QSRP Advantages Highlighted by the Specification:**
 
 * **Unified & Simplified Stack**: Single protocol over a single port reduces complexity significantly.
 * **Performance**: Lower latency and potentially better resource utilization due to QUIC.
@@ -3432,9 +3432,9 @@ This table summarizes how the finalized QSIP specification addresses common RTC 
 
 ## Authors' Addresses
 
-QSIP Working Group (Conceptual)
-Email: contact@example-qsip-wg.org (Illustrative)
+QSRP Working Group (Conceptual)
+Email: contact@example-QSRP-wg.org (Illustrative)
 
 ---
 
-End of QSIP Specification Document
+End of QSRP Specification Document
